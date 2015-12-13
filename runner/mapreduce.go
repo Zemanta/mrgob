@@ -16,8 +16,9 @@ import (
 type HadoopStatus int
 
 var (
-	HadoopStatusRunning HadoopStatus = 0
-	HadoopStatusSuccess HadoopStatus = 1
+	HadoopStatusIdle    HadoopStatus = 0
+	HadoopStatusRunning HadoopStatus = 1
+	HadoopStatusSuccess HadoopStatus = 2
 	HadoopStatusFailed  HadoopStatus = -1
 
 	ErrNotRunning            = fmt.Errorf("Command not running")
@@ -75,6 +76,7 @@ func (hc *HadoopCommand) Run() HadoopStatus {
 		return hc.status
 	}
 	hc.started = true
+	hc.status = HadoopStatusRunning
 	hc.startedMu.Unlock()
 
 	defer hc.done.Unlock()
@@ -163,9 +165,6 @@ func (hc *HadoopCommand) FetchDebugData() (*HadoopDebugData, error) {
 }
 
 type HadoopRun struct {
-	hadoopMaster string
-	hadoopRunOn  string
-
 	applicationId string
 
 	err    error
@@ -286,7 +285,12 @@ func (hr *HadoopRun) FetchApplicationStatus() (*HadoopApplicationStatus, error) 
 
 	debugLog("Fetching map reduce application status")
 
-	resp, err := http.Get(fmt.Sprintf(statusApiUrl, hr.hadoopMaster, hadoopApiPort, hr.applicationId))
+	hadoopMaster, err := hadoopProvider.GetMasterHost()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := http.Get(fmt.Sprintf(statusApiUrl, hadoopMaster, hadoopApiPort, hr.applicationId))
 	if err != nil {
 		return nil, err
 	}
@@ -312,9 +316,14 @@ func (hr *HadoopRun) FetchJobCounters() (HadoopJobCounters, error) {
 
 	debugLog("Fetching map reduce application counters")
 
+	hadoopMaster, err := hadoopProvider.GetMasterHost()
+	if err != nil {
+		return nil, err
+	}
+
 	jobId := strings.Replace(hr.applicationId, "application", "job", 1)
 
-	resp, err := http.Get(fmt.Sprintf(counterApiUrl, hr.hadoopMaster, historyServerPort, jobId))
+	resp, err := http.Get(fmt.Sprintf(counterApiUrl, hadoopMaster, historyServerPort, jobId))
 	if err != nil {
 		return nil, err
 	}
@@ -346,6 +355,7 @@ func (hr *HadoopRun) exec(arguments []string) bool {
 
 	client, err := hadoopProvider.GetNextSSHClient()
 	if err != nil {
+		hr.err = err
 		return false
 	}
 	defer client.Close()
@@ -383,6 +393,12 @@ func (hr *HadoopRun) FetchDebugData() (*HadoopDebugData, error) {
 	d.Counters, cerr = hr.FetchJobCounters()
 	if cerr != nil {
 		err = cerr
+	}
+
+	var serr error
+	d.Status, cerr = hr.FetchApplicationStatus()
+	if serr != nil {
+		err = serr
 	}
 
 	return d, err

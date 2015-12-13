@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"golang.org/x/crypto/ssh"
@@ -32,7 +34,7 @@ func main() {
 		},
 	}
 
-	runner.SetHadoopProvider(runner.NewEmrProvider(sshConfig, awsConfig))
+	runner.SetHadoopProvider(runner.NewEmrProvider("eventlog-processor", sshConfig, awsConfig))
 
 	cmd := runner.NewMapReduce(0, "hadoop-streaming",
 		"-D", "mapred.job.name=hamax-text",
@@ -52,5 +54,6 @@ func main() {
 	//cmd.FetchJobCounters()
 	//cmd.FetchApplicationLogs()
 
-	cmd.FetchDebugData()
+	_, err := cmd.FetchDebugData()
+	fmt.Println(err)
 }

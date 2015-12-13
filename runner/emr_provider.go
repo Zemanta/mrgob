@@ -11,8 +11,6 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-var clusterName = "eventlog-processor"
-
 var (
 	ErrClusterNotFound  = fmt.Errorf("EMR cluster not found")
 	ErrInstanceNotFound = fmt.Errorf("EMR instance not found")
@@ -36,6 +34,8 @@ var (
 )
 
 type EmrProvider struct {
+	clusterName string
+
 	clusterCache     *clusterState
 	clusterCacheLock sync.Mutex
 
@@ -43,10 +43,11 @@ type EmrProvider struct {
 	awsConfig *aws.Config
 }
 
-func NewEmrProvider(sshConfig *ssh.ClientConfig, awsConfig *aws.Config) *EmrProvider {
+func NewEmrProvider(clusterName string, sshConfig *ssh.ClientConfig, awsConfig *aws.Config) *EmrProvider {
 	return &EmrProvider{
-		sshConfig: sshConfig,
-		awsConfig: awsConfig,
+		clusterName: clusterName,
+		sshConfig:   sshConfig,
+		awsConfig:   awsConfig,
 	}
 }
 
@@ -76,7 +77,7 @@ func (e *EmrProvider) getClusterState() (*clusterState, error) {
 	}
 
 	for _, c := range clusters.Clusters {
-		if *c.Name != clusterName {
+		if *c.Name != e.clusterName {
 			continue
 		}
 		if cc.summary == nil || c.Status.Timeline.CreationDateTime.After(*cc.summary.Status.Timeline.CreationDateTime) {
