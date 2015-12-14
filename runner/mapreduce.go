@@ -55,13 +55,16 @@ type HadoopCommand struct {
 	status HadoopStatus
 }
 
-func NewMapReduce(retries int, arguments ...string) *HadoopCommand {
+func NewMapReduce(arguments ...string) *HadoopCommand {
 	hd := &HadoopCommand{
-		args:    arguments,
-		retries: retries,
+		args: arguments,
 	}
 	hd.done.Lock()
 	return hd
+}
+
+func (hc *HadoopCommand) SetRetries(n int) {
+	hc.retries = n
 }
 
 func (hc *HadoopCommand) Run() HadoopStatus {

@@ -36,16 +36,17 @@ func main() {
 
 	runner.SetDefaultHadoopProvider(runner.NewEmrProvider("eventlog-processor", sshConfig, awsConfig))
 
-	cmd := runner.NewMapReduce(0, "hadoop-streaming",
+	cmd := runner.NewMapReduce("hadoop-streaming",
 		"-D", "mapred.job.name=hamax-text",
 		"-D", "mapred.reduce.tasks=1",
+		"-D", "mapred.map.tasks=1",
 		"-D", "mapreduce.job.queuename=realtime",
 		//"-D", "mapreduce.job.ubertask.enable=true",
-		"-files", "s3://b1-eventlog-sync/jobs/example",
-		"-input", "s3://b1-eventlog-sync/jobs/merger_dummy",
+		"-files", "s3://b1-eventlog-sync/tmp/wordcount",
+		"-input", "s3://b1-eventlog-sync/tmp/monkeys.txt",
 		"-output", "s3://b1-eventlog-sync/tmp/hamax-test1",
-		"-mapper", "example --stage=mapper",
-		"-reducer", "example --stage=reducer",
+		"-mapper", "wordcount --stage=mapper",
+		"-reducer", "wordcount --stage=reducer",
 	)
 
 	cmd.Run()
