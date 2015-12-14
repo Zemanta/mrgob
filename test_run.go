@@ -34,7 +34,7 @@ func main() {
 		},
 	}
 
-	runner.SetHadoopProvider(runner.NewEmrProvider("eventlog-processor", sshConfig, awsConfig))
+	runner.SetDefaultHadoopProvider(runner.NewEmrProvider("eventlog-processor", sshConfig, awsConfig))
 
 	cmd := runner.NewMapReduce(0, "hadoop-streaming",
 		"-D", "mapred.job.name=hamax-text",

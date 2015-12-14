@@ -1,6 +1,6 @@
-# Bidder's Hadoop Package
+# GO MapReduce
 
-Tools and helpers for writing and running Hadoop jobs in b1
+Tools and helpers for writing and running MapReduce jobs on Hadoop and EMR.
 
 ## Writing jobs
 
@@ -28,7 +28,7 @@ job.Count outputs a counter line to stderr to a predefined counter group so we c
     package main
 
     import (
-        "b1/common/hadoop/job"
+        "github.com/Zemanta/gomr/job"
         "bufio"
         "fmt"
         "io"
@@ -72,6 +72,22 @@ job.Count outputs a counter line to stderr to a predefined counter group so we c
     }
 
 ## Running Jobs
+
+## Configuring Hadoop provider
+
+GOMR needs a way to connect to your Hadoop cluster via api and ssh.
+At the moment it only supports EMR. It will query aws for EMR info and select the newest running cluster matching the name.
+
+	awsConfig := &aws.Config{
+		Region: &app.Env.AWS_REGION,
+	}
+
+	sshConfig := &ssh.ClientConfig{
+		User: "hadoop",
+		Auth: []ssh.AuthMethod{ssh.PublicKeys(sshKey)},
+	}
+
+	runner.SetDefaultHadoopProvider(runner.NewEmrProvider("eventlog-processor", sshConfig, awsConfig))
 
 ### Creating new Hadoop command
 
@@ -141,17 +157,6 @@ Each command can be run only once.
 
 	err := runner.ExecOnCluster(retries, "aws", "s3", "ls", "/path")
 
-## FAQ
-
-#### Where should I put MR executables?
-
-Production jobs should be in "s3://b1-eventlog-sync/jobs/"
-Non production jobs can be wherever except "s3://b1-eventlog-sync/jobs/"
-
-#### How does this thing know where to execute commands?
-
-All commands fetch EMR cluster configuration from AWS API and run jobs on the newest running cluster named "eventlog-processor".
-
-#### What does Borat think about all this?
+## General advice
 
 In past I having bigdata problem. Since deploy Hadoop now have bigdata problem and BigDataProblemMapTaskImpl.

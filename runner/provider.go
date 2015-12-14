@@ -10,6 +10,6 @@ type HadoopProvider interface {
 	GetNextSSHClient() (*ssh.Client, error)
 }
 
-func SetHadoopProvider(p HadoopProvider) {
+func SetDefaultHadoopProvider(p HadoopProvider) {
 	hadoopProvider = p
 }
