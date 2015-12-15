@@ -31,11 +31,15 @@ func NewStringKVWriter(w io.Writer) *StringKVWriter {
 }
 
 func (w *StringKVWriter) Write(k string, v string) {
-	fmt.Fprintf(w.w, "%s\t%s\n", encodeKey(k), v)
+	w.w.Write([]byte(encodeKey(k)))
+	w.w.Write(tab)
+	w.w.Write([]byte(v))
+	w.w.Write(nl)
 }
 
 func (w *StringKVWriter) WriteKey(k string) {
-	fmt.Println(k)
+	w.w.Write([]byte(k))
+	w.w.Write(nl)
 }
 
 type StringKVReader struct {

@@ -39,3 +39,14 @@ func InitStringJob(mapper func(*StringKVWriter, io.Reader), reducer func(io.Writ
 		Log.Fatalln("stage must be either 'mapper' or 'reducer'")
 	}
 }
+
+func InitJsonJob(mapper func(*JsonKVWriter, io.Reader), reducer func(io.Writer, *JsonKVReader)) {
+	switch initStage() {
+	case "mapper":
+		mapper(NewJsonKVWriter(os.Stdout), os.Stdin)
+	case "reducer":
+		reducer(os.Stdout, NewJsonKVReader(os.Stdin))
+	default:
+		Log.Fatalln("stage must be either 'mapper' or 'reducer'")
+	}
+}
