@@ -4,17 +4,16 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"strconv"
 	"strings"
 
 	"github.com/Zemanta/gomr/job"
 )
 
 func main() {
-	job.InitStringJob(runMapper, runReducer)
+	job.InitJsonJob(runMapper, runReducer)
 }
 
-func runMapper(w *job.StringKVWriter, r io.Reader) {
+func runMapper(w *job.JsonKVWriter, r io.Reader) {
 	job.Log.Print("Mapper run")
 
 	scanner := bufio.NewScanner(r)
@@ -22,7 +21,7 @@ func runMapper(w *job.StringKVWriter, r io.Reader) {
 		line := scanner.Text()
 
 		for _, word := range strings.Fields(line) {
-			w.Write(word, "1")
+			w.Write(word, 1)
 			job.Count("mapper_word", 1)
 		}
 	}
@@ -32,26 +31,31 @@ func runMapper(w *job.StringKVWriter, r io.Reader) {
 	}
 }
 
-func runReducer(w io.Writer, r *job.StringKVReader) {
+func runReducer(w io.Writer, r *job.JsonKVReader) {
 	job.Log.Print("Reducer run")
 
+	key := new(string)
 	for r.Scan() {
-		key, vr := r.Read()
+		vr, err := r.Read(key)
+		if err != nil {
+			job.Log.Fatal(err)
+		}
 
 		count := 0
+		c := new(int)
 		for vr.Scan() {
-			c, err := strconv.Atoi(vr.Read())
+			err := vr.Read(c)
 			if err != nil {
 				job.Log.Fatal(err)
 			}
-			count += c
+			count += *c
 		}
 
 		if err := vr.Err(); err != nil {
 			job.Log.Fatal(err)
 		}
 
-		fmt.Fprintf(w, "%s\t%d\n", key, count)
+		fmt.Fprintf(w, "%s\t%d\n", *key, count)
 		job.Count("reducer_word", 1)
 	}
 

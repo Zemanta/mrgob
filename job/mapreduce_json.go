@@ -7,34 +7,46 @@ import (
 	"io"
 )
 
-var (
-	nl  = []byte{'\n'}
-	tab = []byte{'\t'}
-)
+// Json encoder appends new line after each value so we have to strip it
+type keyJsonWriter struct {
+	w io.Writer
+}
+
+func (w *keyJsonWriter) Write(b []byte) (int, error) {
+	n := len(b)
+	if b[n-1] == '\n' {
+		return w.w.Write(b[:n-1])
+	}
+	return w.w.Write(b)
+}
 
 type JsonKVWriter struct {
 	w io.Writer
 
-	js *json.Encoder
+	valuew *json.Encoder
+	keyw   *json.Encoder
 }
 
 func NewJsonKVWriter(w io.Writer) *JsonKVWriter {
 	return &JsonKVWriter{
-		w:  w,
-		js: json.NewEncoder(w),
+		w:      w,
+		valuew: json.NewEncoder(w),
+		keyw:   json.NewEncoder(&keyJsonWriter{w}),
 	}
 }
 
-func (w *JsonKVWriter) Write(k string, v interface{}) error {
-	w.w.Write([]byte(encodeKey(k)))
+func (w *JsonKVWriter) Write(k interface{}, v interface{}) error {
+	if err := w.keyw.Encode(k); err != nil {
+		return err
+	}
+
 	w.w.Write(tab)
 
-	return w.js.Encode(v)
+	return w.valuew.Encode(v)
 }
 
-func (w *JsonKVWriter) WriteKey(k string) {
-	w.w.Write([]byte(k))
-	w.w.Write(nl)
+func (w *JsonKVWriter) WriteKey(k interface{}) error {
+	return w.valuew.Encode(k)
 }
 
 type JsonKVReader struct {
@@ -65,8 +77,8 @@ func (r *JsonKVReader) Scan() bool {
 	return !r.vr.done
 }
 
-func (r *JsonKVReader) Read() (string, *JsonValueReader) {
-	return decodeKey(string(r.vr.key)), r.vr
+func (r *JsonKVReader) Read(target interface{}) (*JsonValueReader, error) {
+	return r.vr, json.Unmarshal(r.vr.key, target)
 }
 
 func (r *JsonKVReader) Err() error {

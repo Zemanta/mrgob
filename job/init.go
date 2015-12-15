@@ -29,12 +29,12 @@ func InitRawJob(mapper func(), reducer func()) {
 	}
 }
 
-func InitStringJob(mapper func(*StringKVWriter, io.Reader), reducer func(io.Writer, *StringKVReader)) {
+func InitByteJob(mapper func(*ByteKVWriter, io.Reader), reducer func(io.Writer, *ByteKVReader)) {
 	switch initStage() {
 	case "mapper":
-		mapper(NewStringKVWriter(os.Stdout), os.Stdin)
+		mapper(NewByteKVWriter(os.Stdout), os.Stdin)
 	case "reducer":
-		reducer(os.Stdout, NewStringKVReader(os.Stdin))
+		reducer(os.Stdout, NewByteKVReader(os.Stdin))
 	default:
 		Log.Fatalln("stage must be either 'mapper' or 'reducer'")
 	}

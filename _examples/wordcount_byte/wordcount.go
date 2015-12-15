@@ -4,16 +4,17 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"github.com/Zemanta/gomr/job"
 )
 
 func main() {
-	job.InitJsonJob(runMapper, runReducer)
+	job.InitByteJob(runMapper, runReducer)
 }
 
-func runMapper(w *job.JsonKVWriter, r io.Reader) {
+func runMapper(w *job.ByteKVWriter, r io.Reader) {
 	job.Log.Print("Mapper run")
 
 	scanner := bufio.NewScanner(r)
@@ -21,7 +22,7 @@ func runMapper(w *job.JsonKVWriter, r io.Reader) {
 		line := scanner.Text()
 
 		for _, word := range strings.Fields(line) {
-			w.Write(word, 1)
+			w.Write([]byte(word), []byte("1"))
 			job.Count("mapper_word", 1)
 		}
 	}
@@ -31,20 +32,19 @@ func runMapper(w *job.JsonKVWriter, r io.Reader) {
 	}
 }
 
-func runReducer(w io.Writer, r *job.JsonKVReader) {
+func runReducer(w io.Writer, r *job.ByteKVReader) {
 	job.Log.Print("Reducer run")
 
 	for r.Scan() {
 		key, vr := r.Read()
 
 		count := 0
-		c := new(int)
 		for vr.Scan() {
-			err := vr.Read(c)
+			c, err := strconv.Atoi(string(vr.Read()))
 			if err != nil {
 				job.Log.Fatal(err)
 			}
-			count += *c
+			count += c
 		}
 
 		if err := vr.Err(); err != nil {
