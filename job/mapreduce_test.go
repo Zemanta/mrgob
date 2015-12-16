@@ -23,6 +23,19 @@ func TestEncodeDecodeBytes(t *testing.T) {
 	}
 }
 
+func TestEncodeWriter(t *testing.T) {
+	in := "\nAA\tBB\\t\n\\a"
+	exp := "\\nAA\\tBB\\\\t\\n\\\\a"
+	out := &bytes.Buffer{}
+
+	w := newEncodeWriter(out)
+	w.Write([]byte(in))
+
+	if out.String() != exp {
+		t.Errorf("%s\n!=\n%s", out, exp)
+	}
+}
+
 func TestByteWriter(t *testing.T) {
 	buf := &bytes.Buffer{}
 	w := NewByteKVWriter(buf)
@@ -66,11 +79,11 @@ key3	val4
 
 	r := NewByteKVReader(bytes.NewReader([]byte(in)))
 	for r.Scan() {
-		key, vr := r.Read()
+		key, vr := r.Key()
 		res += string(key)
 
 		for vr.Scan() {
-			val := vr.Read()
+			val := vr.Value()
 			res += string(val)
 		}
 
@@ -129,7 +142,7 @@ func TestJsonReader(t *testing.T) {
 	r := NewJsonKVReader(strings.NewReader(in))
 	key := new(string)
 	for r.Scan() {
-		vr, err := r.Read(key)
+		vr, err := r.Key(key)
 		if err != nil {
 			t.Error(err)
 		}
@@ -137,7 +150,7 @@ func TestJsonReader(t *testing.T) {
 
 		val := &v{}
 		for vr.Scan() {
-			err := vr.Read(val)
+			err := vr.Value(val)
 			if err != nil {
 				t.Error(err)
 			}
@@ -224,10 +237,10 @@ func BenchmarkByteReader(b *testing.B) {
 	b.ResetTimer()
 
 	for r.Scan() {
-		_, vr := r.Read()
+		_, vr := r.Key()
 
 		for vr.Scan() {
-			vr.Read()
+			vr.Value()
 		}
 
 		if err := vr.Err(); err != nil {
@@ -257,10 +270,10 @@ func BenchmarkByteSpecialCharsReader(b *testing.B) {
 	b.ResetTimer()
 
 	for r.Scan() {
-		_, vr := r.Read()
+		_, vr := r.Key()
 
 		for vr.Scan() {
-			vr.Read()
+			vr.Value()
 		}
 
 		if err := vr.Err(); err != nil {
@@ -298,13 +311,13 @@ func BenchmarkJsonReader(b *testing.B) {
 	b.ResetTimer()
 
 	for r.Scan() {
-		vr, err := r.Read(key)
+		vr, err := r.Key(key)
 		if err != nil {
 			b.Error(err)
 		}
 
 		for vr.Scan() {
-			err := vr.Read(v)
+			err := vr.Value(v)
 			if err != nil {
 				b.Error(err)
 			}

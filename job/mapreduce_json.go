@@ -77,7 +77,7 @@ func (r *JsonKVReader) Scan() bool {
 	return !r.vr.done
 }
 
-func (r *JsonKVReader) Read(target interface{}) (*JsonValueReader, error) {
+func (r *JsonKVReader) Key(target interface{}) (*JsonValueReader, error) {
 	return r.vr, json.Unmarshal(r.vr.key, target)
 }
 
@@ -130,12 +130,12 @@ func (r *JsonValueReader) Scan() bool {
 	}
 
 	r.key = key
-	r.value = line[split:]
+	r.value = line[split+1:]
 
 	return ok
 }
 
-func (r *JsonValueReader) Read(target interface{}) error {
+func (r *JsonValueReader) Value(target interface{}) error {
 	return json.Unmarshal(r.value, target)
 }
 

@@ -36,7 +36,7 @@ func runReducer(w io.Writer, r *job.JsonKVReader) {
 
 	key := new(string)
 	for r.Scan() {
-		vr, err := r.Read(key)
+		vr, err := r.Key(key)
 		if err != nil {
 			job.Log.Fatal(err)
 		}
@@ -44,7 +44,7 @@ func runReducer(w io.Writer, r *job.JsonKVReader) {
 		count := 0
 		c := new(int)
 		for vr.Scan() {
-			err := vr.Read(c)
+			err := vr.Value(c)
 			if err != nil {
 				job.Log.Fatal(err)
 			}

@@ -14,7 +14,7 @@ func main() {
 	job.InitRawJob(runMapper, runReducer)
 }
 
-func runMapper() {
+func runMapper(w io.Writer, r io.Reader) {
 	job.Log.Print("Mapper run")
 
 	in := bufio.NewReader(os.Stdin)
@@ -33,12 +33,12 @@ func runMapper() {
 	}
 }
 
-func runReducer() {
+func runReducer(w io.Writer, r io.Reader) {
 	job.Log.Print("Reducer run")
 
 	words := map[string]int{}
 
-	in := bufio.NewReader(os.Stdin)
+	in := bufio.NewReader(r)
 	for {
 		word, err := in.ReadString('\n')
 		if err == io.EOF {
@@ -50,7 +50,7 @@ func runReducer() {
 		job.Count("reducer_line", 1)
 	}
 
-	for w, c := range words {
-		fmt.Printf("%s\t%d\n", w, c)
+	for word, c := range words {
+		fmt.Fprintf(w, "%s\t%d\n", word, c)
 	}
 }

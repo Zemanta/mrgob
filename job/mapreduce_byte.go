@@ -18,78 +18,26 @@ var (
 	ErrInvalidLine = fmt.Errorf("Invalid line")
 )
 
-// Escape tab and new line
-func encodeBytes(bs []byte) []byte {
-	var repl []byte
-	copied := false
-
-	for i := 0; i < len(bs); i++ {
-		repl = nil
-
-		if bs[i] == '\t' {
-			repl = esctab
-		} else if bs[i] == '\n' {
-			repl = escnl
-		} else if bs[i] == '\\' {
-			repl = escesc
-		}
-
-		if repl != nil {
-			if !copied {
-				newbs := make([]byte, len(bs), len(bs)*2)
-				copy(newbs, bs)
-				bs = newbs
-				copied = true
-			}
-			bs = append(bs[:i+1], bs[i:]...)
-			bs[i] = repl[0]
-			bs[i+1] = repl[1]
-			i++
-		}
-	}
-	return bs
-}
-func decodeBytes(bs []byte) []byte {
-	copied := false
-
-	for i := 0; i < len(bs); i++ {
-		if bs[i] != '\\' {
-			continue
-		}
-		if !copied {
-			newbs := make([]byte, len(bs))
-			copy(newbs, bs)
-			bs = newbs
-			copied = true
-		}
-		bs = append(bs[:i], bs[i+1:]...)
-		if bs[i] == 't' {
-			bs[i] = '\t'
-		} else if bs[i] == 'n' {
-			bs[i] = '\n'
-		}
-	}
-	return bs
-}
-
 type ByteKVWriter struct {
-	w io.Writer
+	w    io.Writer
+	encw *encodeWriter
 }
 
 func NewByteKVWriter(w io.Writer) *ByteKVWriter {
 	return &ByteKVWriter{
-		w: w,
+		w:    w,
+		encw: newEncodeWriter(w),
 	}
 }
 
 func (w *ByteKVWriter) Write(k []byte, v []byte) error {
-	if _, err := w.w.Write(encodeBytes(k)); err != nil {
+	if _, err := w.encw.Write(k); err != nil {
 		return err
 	}
 	if _, err := w.w.Write(tab); err != nil {
 		return err
 	}
-	if _, err := w.w.Write(encodeBytes(v)); err != nil {
+	if _, err := w.encw.Write(v); err != nil {
 		return err
 	}
 	if _, err := w.w.Write(nl); err != nil {
@@ -136,7 +84,7 @@ func (r *ByteKVReader) Scan() bool {
 	return !r.vr.done
 }
 
-func (r *ByteKVReader) Read() ([]byte, *ByteValueReader) {
+func (r *ByteKVReader) Key() ([]byte, *ByteValueReader) {
 	return decodeBytes(r.vr.key), r.vr
 }
 
@@ -194,7 +142,7 @@ func (r *ByteValueReader) Scan() bool {
 	return ok
 }
 
-func (r *ByteValueReader) Read() []byte {
+func (r *ByteValueReader) Value() []byte {
 	return decodeBytes(r.value)
 }
 

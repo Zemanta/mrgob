@@ -36,11 +36,11 @@ func runReducer(w io.Writer, r *job.ByteKVReader) {
 	job.Log.Print("Reducer run")
 
 	for r.Scan() {
-		key, vr := r.Read()
+		key, vr := r.Key()
 
 		count := 0
 		for vr.Scan() {
-			c, err := strconv.Atoi(string(vr.Read()))
+			c, err := strconv.Atoi(string(vr.Value()))
 			if err != nil {
 				job.Log.Fatal(err)
 			}

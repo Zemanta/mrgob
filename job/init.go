@@ -18,12 +18,12 @@ func initStage() string {
 	return *runStage
 }
 
-func InitRawJob(mapper func(), reducer func()) {
+func InitRawJob(mapper func(io.Writer, io.Reader), reducer func(io.Writer, io.Reader)) {
 	switch initStage() {
 	case "mapper":
-		mapper()
+		mapper(os.Stdout, os.Stdin)
 	case "reducer":
-		reducer()
+		reducer(os.Stdout, os.Stdin)
 	default:
 		Log.Fatalln("stage must be either 'mapper' or 'reducer'")
 	}
