@@ -6,10 +6,18 @@ Tools and helpers for writing and running MapReduce jobs on Hadoop and EMR.
 
 ### Job initialization
 
-job.InitRawJob method creates command line flags for triggering either mapper or reducer functions.
+job.Init\*Job method creates command line flags for triggering either mapper or reducer functions.
 
     example --stage=mapper
     example --stage=reducer
+
+Supported job types
+
+    func InitRawJob(mapper func(io.Writer, io.Reader), reducer func(io.Writer, io.Reader))
+
+    func InitByteJob(mapper func(*ByteKVWriter, io.Reader), reducer func(io.Writer, *ByteKVReader))
+
+    func InitJsonJob(mapper func(*JsonKVWriter, io.Reader), reducer func(io.Writer, *JsonKVReader))
 
 ### Logging
 
@@ -23,53 +31,11 @@ job.Count outputs a counter line to stderr to a predefined counter group so we c
 
     job.Count("myCounter", 1)
 
-### Example:
+### Examples:
 
-    package main
-
-    import (
-        "github.com/Zemanta/gomr/job"
-        "bufio"
-        "fmt"
-        "io"
-        "os"
-    )
-
-    func main() {
-        job.InitRawJob(runMapper, runReducer)
-    }
-
-    func runMapper() {
-        job.Log.Print("Mapper run")
-
-        in := bufio.NewReader(os.Stdin)
-        for {
-            line, err := in.ReadString('\n')
-            if err == io.EOF {
-                break
-            } else if err != nil {
-                job.Log.Fatal(err)
-            }
-
-            job.Count("mapper_line", 1)
-            fmt.Println("key\tvalue")
-        }
-    }
-
-    func runReducer() {
-        job.Log.Print("Reducer run")
-
-        in := bufio.NewReader(os.Stdin)
-        for {
-            _, err := in.ReadString('\n')
-            if err == io.EOF {
-                break
-            } else if err != nil {
-                job.Log.Fatal(err)
-            }
-            job.Count("reducer_line", 1)
-        }
-    }
+- [Raw wordcount job](https://github.com/Zemanta/gomr/blob/master/_examples/wordcount_raw/wordcount.go)
+- [Byte mr wordcount job](https://github.com/Zemanta/gomr/blob/master/_examples/wordcount_byte/wordcount.go)
+- [Json mr wordcount job](https://github.com/Zemanta/gomr/blob/master/_examples/wordcount_json/wordcount.go)
 
 ## Running Jobs
 
@@ -120,43 +86,12 @@ Each command can be run only once.
 
 ### Example:
 
-	var args []string
-	args = append(args, "hadoop-streaming")
-	args = append(args, mapredConfig...)
-	args = append(args,
-		"-D", fmt.Sprintf("mapred.job.name=join-%s", timePath),
-		"-D", "mapred.reduce.tasks=1",
-		"-files", joinerPath,
-		"-output", joinedTmpDest,
-		"-mapper", "joiner --stage=mapper",
-		"-reducer", "joiner --stage=reducer",
-	)
-
-	for _, et := range eventLogTypesJoin {
-		inputFile := fmt.Sprintf(fileCombinedDest, et, timePath)
-		args = append(args, "--input", inputFile)
-	}
-
-	cmd := runner.NewMapReduce(3, args...)
-	if cmd.Run() != runner.HadoopStatusSuccess {
-		mrd, derr := cmd.FetchDebugData()
-
-		app.Log.WithFields(logrus.Fields{
-			"err":         mrd.CmdErr,
-			"stderr":      mrd.StdErr,
-			"stdout":      mrd.StdOut,
-			"logErr":      derr,
-			"applogs":     mrd.Logs.AppLog(),
-			"appcounters": mrd.Counters.AppCounters(),
-		}).Warn("EventlogJoiner join failed")
-
-		return
-	}
+- [Raw job runner](https://github.com/Zemanta/gomr/blob/master/_examples/run_raw/run.go)
 
 ## Executing non-mapreduce commands
 
 	err := runner.ExecOnCluster(retries, "aws", "s3", "ls", "/path")
 
-## General advice
+## General life advice
 
 In past I having bigdata problem. Since deploy Hadoop now have bigdata problem and BigDataProblemMapTaskImpl.
