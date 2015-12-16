@@ -18,6 +18,7 @@ func initStage() string {
 	return *runStage
 }
 
+// InitRawJob initiates a raw mapreduce job, calling an appropriate function based on the mapreduce stage
 func InitRawJob(mapper func(io.Writer, io.Reader), reducer func(io.Writer, io.Reader)) {
 	switch initStage() {
 	case "mapper":
@@ -29,6 +30,7 @@ func InitRawJob(mapper func(io.Writer, io.Reader), reducer func(io.Writer, io.Re
 	}
 }
 
+// InitByteJob initiates a byte reader/writer mapreduce job, calling an appropriate function based on the mapreduce stage
 func InitByteJob(mapper func(*ByteKVWriter, io.Reader), reducer func(io.Writer, *ByteKVReader)) {
 	switch initStage() {
 	case "mapper":
@@ -40,6 +42,7 @@ func InitByteJob(mapper func(*ByteKVWriter, io.Reader), reducer func(io.Writer, 
 	}
 }
 
+// InitByteJob initiates a json reader/writer mapreduce job, calling an appropriate function based on the mapreduce stage
 func InitJsonJob(mapper func(*JsonKVWriter, io.Reader), reducer func(io.Writer, *JsonKVReader)) {
 	switch initStage() {
 	case "mapper":

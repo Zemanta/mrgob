@@ -20,6 +20,7 @@ func (w *keyJsonWriter) Write(b []byte) (int, error) {
 	return w.w.Write(b)
 }
 
+// JsonKVWriter encodes and writes key, value pairs to the writer
 type JsonKVWriter struct {
 	w io.Writer
 
@@ -35,6 +36,7 @@ func NewJsonKVWriter(w io.Writer) *JsonKVWriter {
 	}
 }
 
+// Write encodes both key and value
 func (w *JsonKVWriter) Write(k interface{}, v interface{}) error {
 	if err := w.keyw.Encode(k); err != nil {
 		return err
@@ -45,10 +47,12 @@ func (w *JsonKVWriter) Write(k interface{}, v interface{}) error {
 	return w.valuew.Encode(v)
 }
 
+// WriteKey only accepts a key in case your mapper doesn't require values
 func (w *JsonKVWriter) WriteKey(k interface{}) error {
 	return w.valuew.Encode(k)
 }
 
+// JsonKVReader streams key, value pairs from the reader and merges them for easier consumption by the reducer
 type JsonKVReader struct {
 	scanner *bufio.Scanner
 	vr      *JsonValueReader
@@ -60,6 +64,7 @@ func NewJsonKVReader(r io.Reader) *JsonKVReader {
 	}
 }
 
+// Scan advances the reader to the next key, which will then be available through the Key method. It returns false when the scan stops, either by reaching the end of the input or an error. After Scan returns false, the Err method will return any error that occurred during scanning, except that if it was io.EOF, Err will return nil.
 func (r *JsonKVReader) Scan() bool {
 	if r.vr == nil {
 		r.vr = &JsonValueReader{scanner: r.scanner}
@@ -77,10 +82,12 @@ func (r *JsonKVReader) Scan() bool {
 	return !r.vr.done
 }
 
+// Key decodes the current key into the target interface and returns a reader for all values belonging to this key.
 func (r *JsonKVReader) Key(target interface{}) (*JsonValueReader, error) {
 	return r.vr, json.Unmarshal(r.vr.key, target)
 }
 
+// Err returns the first non-EOF error that was encountered by the reader.
 func (r *JsonKVReader) Err() error {
 	if r.vr != nil {
 		return r.vr.Err()
@@ -88,6 +95,7 @@ func (r *JsonKVReader) Err() error {
 	return r.scanner.Err()
 }
 
+// JsonValueReader streams values for the specified key.
 type JsonValueReader struct {
 	scanner *bufio.Scanner
 
@@ -99,6 +107,7 @@ type JsonValueReader struct {
 	value []byte
 }
 
+// Scan advances the reader to the next value, which will then be available through the Value method.
 func (r *JsonValueReader) Scan() bool {
 	if r.skip > 0 {
 		r.skip--
@@ -138,10 +147,12 @@ func (r *JsonValueReader) Scan() bool {
 	return ok
 }
 
+// Value decodes the current value into the target interface.
 func (r *JsonValueReader) Value(target interface{}) error {
 	return json.Unmarshal(r.value, target)
 }
 
+// Err returns the first non-EOF error that was encountered by the reader.
 func (r *JsonValueReader) Err() error {
 	if r.err != nil {
 		return r.err

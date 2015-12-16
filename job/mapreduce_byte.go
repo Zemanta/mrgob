@@ -14,10 +14,11 @@ var (
 	escnl  = []byte{'\\', 'n'}
 	esctab = []byte{'\\', 't'}
 	escesc = []byte{'\\', '\\'}
-
-	ErrInvalidLine = fmt.Errorf("Invalid line")
 )
 
+var ErrInvalidLine = fmt.Errorf("Invalid line")
+
+// ByteKVWriter encodes and writes key, value pairs to the writer
 type ByteKVWriter struct {
 	w    io.Writer
 	encw *encodeWriter
@@ -30,6 +31,7 @@ func NewByteKVWriter(w io.Writer) *ByteKVWriter {
 	}
 }
 
+// Write encodes both key and value
 func (w *ByteKVWriter) Write(k []byte, v []byte) error {
 	if _, err := w.encw.Write(k); err != nil {
 		return err
@@ -46,6 +48,7 @@ func (w *ByteKVWriter) Write(k []byte, v []byte) error {
 	return nil
 }
 
+// WriteKey only accepts a key in case your mapper doesn't require values
 func (w *ByteKVWriter) WriteKey(k []byte) error {
 	if _, err := w.w.Write(encodeBytes(k)); err != nil {
 		return err
@@ -56,6 +59,7 @@ func (w *ByteKVWriter) WriteKey(k []byte) error {
 	return nil
 }
 
+// ByteKVReader streams key, value pairs from the reader and merges them for easier consumption by the reducer
 type ByteKVReader struct {
 	scanner *bufio.Scanner
 	vr      *ByteValueReader
@@ -67,6 +71,7 @@ func NewByteKVReader(r io.Reader) *ByteKVReader {
 	}
 }
 
+// Scan advances the reader to the next key, which will then be available through the Key method. It returns false when the scan stops, either by reaching the end of the input or an error. After Scan returns false, the Err method will return any error that occurred during scanning, except that if it was io.EOF, Err will return nil.
 func (r *ByteKVReader) Scan() bool {
 	if r.vr == nil {
 		r.vr = &ByteValueReader{scanner: r.scanner}
@@ -84,10 +89,12 @@ func (r *ByteKVReader) Scan() bool {
 	return !r.vr.done
 }
 
+// Key returns decoded key and reader for all values belonging to this key.
 func (r *ByteKVReader) Key() ([]byte, *ByteValueReader) {
 	return decodeBytes(r.vr.key), r.vr
 }
 
+// Err returns the first non-EOF error that was encountered by the reader.
 func (r *ByteKVReader) Err() error {
 	if r.vr != nil {
 		return r.vr.Err()
@@ -95,6 +102,7 @@ func (r *ByteKVReader) Err() error {
 	return r.scanner.Err()
 }
 
+// ByteValueReader streams values for the specified key.
 type ByteValueReader struct {
 	scanner *bufio.Scanner
 
@@ -106,6 +114,7 @@ type ByteValueReader struct {
 	value []byte
 }
 
+// Scan advances the reader to the next value, which will then be available through the Value method.
 func (r *ByteValueReader) Scan() bool {
 	if r.skip > 0 {
 		r.skip--
@@ -145,10 +154,12 @@ func (r *ByteValueReader) Scan() bool {
 	return ok
 }
 
+// Value decodes the current value and returns it.
 func (r *ByteValueReader) Value() []byte {
 	return decodeBytes(r.value)
 }
 
+// Err returns the first non-EOF error that was encountered by the reader.
 func (r *ByteValueReader) Err() error {
 	if r.err != nil {
 		return r.err

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"testing"
+
+	"github.com/Zemanta/gomr/job"
 )
 
 func TestRawTester(t *testing.T) {
@@ -67,14 +69,14 @@ func TestByteTester(t *testing.T) {
 word2	1
 `
 
-	mapper := func(w *ByteKVWriter, r io.Reader) {
+	mapper := func(w *job.ByteKVWriter, r io.Reader) {
 		scanner := bufio.NewScanner(r)
 		for scanner.Scan() {
 			line := scanner.Text()
 			w.WriteKey([]byte(line))
 		}
 	}
-	reducer := func(w io.Writer, r *ByteKVReader) {
+	reducer := func(w io.Writer, r *job.ByteKVReader) {
 		for r.Scan() {
 			key, valueReader := r.Key()
 			c := 0
@@ -107,14 +109,14 @@ func TestJsonTester(t *testing.T) {
 word2	1
 `
 
-	mapper := func(w *JsonKVWriter, r io.Reader) {
+	mapper := func(w *job.JsonKVWriter, r io.Reader) {
 		scanner := bufio.NewScanner(r)
 		for scanner.Scan() {
 			line := scanner.Text()
 			w.WriteKey(line)
 		}
 	}
-	reducer := func(w io.Writer, r *JsonKVReader) {
+	reducer := func(w io.Writer, r *job.JsonKVReader) {
 		for r.Scan() {
 			key := new(string)
 			valueReader, err := r.Key(key)

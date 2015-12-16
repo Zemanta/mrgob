@@ -5,6 +5,8 @@ import (
 	"io"
 	"sort"
 	"strings"
+
+	"github.com/Zemanta/gomr/job"
 )
 
 type testSorter struct {
@@ -26,18 +28,18 @@ func TestRawJob(input io.Reader, output io.Writer, mapper func(io.Writer, io.Rea
 	reducer(output, sorter)
 }
 
-func TestByteJob(input io.Reader, output io.Writer, mapper func(*ByteKVWriter, io.Reader), reducer func(io.Writer, *ByteKVReader)) {
+func TestByteJob(input io.Reader, output io.Writer, mapper func(*job.ByteKVWriter, io.Reader), reducer func(io.Writer, *job.ByteKVReader)) {
 	sorter := &testSorter{}
 
-	mapper(NewByteKVWriter(sorter), input)
+	mapper(job.NewByteKVWriter(sorter), input)
 	sorter.sort()
-	reducer(output, NewByteKVReader(sorter))
+	reducer(output, job.NewByteKVReader(sorter))
 }
 
-func TestJsonJob(input io.Reader, output io.Writer, mapper func(*JsonKVWriter, io.Reader), reducer func(io.Writer, *JsonKVReader)) {
+func TestJsonJob(input io.Reader, output io.Writer, mapper func(*job.JsonKVWriter, io.Reader), reducer func(io.Writer, *job.JsonKVReader)) {
 	sorter := &testSorter{}
 
-	mapper(NewJsonKVWriter(sorter), input)
+	mapper(job.NewJsonKVWriter(sorter), input)
 	sorter.sort()
-	reducer(output, NewJsonKVReader(sorter))
+	reducer(output, job.NewJsonKVReader(sorter))
 }

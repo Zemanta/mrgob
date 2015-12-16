@@ -1,4 +1,4 @@
-# GO MapReduce
+# Go MapReduce
 
 Tools and helpers for writing and running MapReduce jobs on Hadoop and EMR.
 
@@ -33,7 +33,7 @@ job.Count outputs a counter line to stderr to a predefined counter group so we c
 
 ### Testing jobs
 
-For testing mappers and reducers use Test\*Job function which simulate Hadoop mapreduce by streming input into mapper, sorting mapper's output, streaming it to reducer and writing reducer's output to output writer.
+For testing mappers and reducers use tester.Test\*Job function which simulate Hadoop mapreduce by streming input into mapper, sorting mapper's output, streaming it to reducer and writing reducer's output to output writer.
 
     func TestRawJob(input io.Reader, output io.Writer, mapper func(io.Writer, io.Reader), reducer func(io.Writer, io.Reader))
 
