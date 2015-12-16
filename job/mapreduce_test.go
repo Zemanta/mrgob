@@ -148,8 +148,8 @@ func TestJsonReader(t *testing.T) {
 		}
 		keys += *key
 
-		val := &v{}
 		for vr.Scan() {
+			val := &v{}
 			err := vr.Value(val)
 			if err != nil {
 				t.Error(err)
@@ -318,6 +318,48 @@ func BenchmarkJsonReader(b *testing.B) {
 
 		for vr.Scan() {
 			err := vr.Value(v)
+			if err != nil {
+				b.Error(err)
+			}
+		}
+
+		if err := vr.Err(); err != nil {
+			b.Error(err)
+		}
+	}
+
+	if err := r.Err(); err != nil {
+		b.Error(err)
+	}
+}
+
+func BenchmarkSimpleJsonReader(b *testing.B) {
+	buf := &bytes.Buffer{}
+	w := NewJsonKVWriter(buf)
+
+	k := "MY NORMAL SIZED KEY"
+
+	v := 123
+
+	for i := 0; i < b.N; i++ {
+		rk := fmt.Sprintf("%s%d", k, rand.Intn(5))
+		w.Write(rk, v)
+	}
+
+	key := new(string)
+
+	r := NewJsonKVReader(buf)
+
+	b.ResetTimer()
+
+	for r.Scan() {
+		vr, err := r.Key(key)
+		if err != nil {
+			b.Error(err)
+		}
+
+		for vr.Scan() {
+			err := vr.Value(&v)
 			if err != nil {
 				b.Error(err)
 			}
