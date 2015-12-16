@@ -6,7 +6,7 @@ Tools and helpers for writing and running MapReduce jobs on Hadoop and EMR.
 
 ### Job initialization
 
-job.Init\*Job method creates command line flags for triggering either mapper or reducer functions.
+job.Init\*Job methods create command line flags for triggering either mapper or reducer functions.
 
     example --stage=mapper
     example --stage=reducer
@@ -30,6 +30,17 @@ job.Log is an instance of go's logger struct which logs each line with a prefix 
 job.Count outputs a counter line to stderr to a predefined counter group so we can fetch them in the runner.
 
     job.Count("myCounter", 1)
+
+### Testing jobs
+
+For testing mappers and reducers use Test\*Job function which simulate Hadoop mapreduce by streming input into mapper, sorting mapper's output, streaming it to reducer and writing reducer's output to output writer.
+
+    func TestRawJob(input io.Reader, output io.Writer, mapper func(io.Writer, io.Reader), reducer func(io.Writer, io.Reader))
+
+    func TestByteJob(input io.Reader, output io.Writer, mapper func(*ByteKVWriter, io.Reader), reducer func(io.Writer, *ByteKVReader))
+
+    func TestJsonJob(input io.Reader, output io.Writer, mapper func(*JsonKVWriter, io.Reader), reducer func(io.Writer, *JsonKVReader))
+
 
 ### Examples:
 

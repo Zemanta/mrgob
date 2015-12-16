@@ -125,8 +125,7 @@ func (r *ByteValueReader) Scan() bool {
 
 	split := bytes.IndexByte(line, '\t')
 	if split < 0 {
-		r.err = ErrInvalidLine
-		return false
+		split = len(line)
 	}
 
 	key := line[0:split]
@@ -137,7 +136,11 @@ func (r *ByteValueReader) Scan() bool {
 	}
 
 	r.key = key
-	r.value = line[split+1:]
+	if len(line) > split {
+		r.value = line[split+1:]
+	} else {
+		r.value = nil
+	}
 
 	return ok
 }
