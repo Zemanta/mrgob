@@ -48,6 +48,9 @@ For testing mappers and reducers use tester.Test\*Job function which simulate Ha
 - [Byte mr wordcount job](https://github.com/Zemanta/gomr/blob/master/_examples/wordcount_byte/wordcount.go)
 - [Json mr wordcount job](https://github.com/Zemanta/gomr/blob/master/_examples/wordcount_json/wordcount.go)
 
+
+[API reference for job package](https://github.com/Zemanta/gomr/blob/master/job/README.md)
+
 ## Running Jobs
 
 ## Configuring Hadoop provider
@@ -102,6 +105,8 @@ Each command can be run only once.
 ## Executing non-mapreduce commands
 
 	err := runner.ExecOnCluster(retries, "aws", "s3", "ls", "/path")
+
+[API reference for runner package](https://github.com/Zemanta/gomr/blob/master/runner/README.md)
 
 ## General life advice
 
