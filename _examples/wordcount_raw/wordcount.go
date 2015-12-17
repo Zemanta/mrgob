@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Zemanta/gomr/job"
+	"github.com/Zemanta/mrgob/job"
 )
 
 func main() {

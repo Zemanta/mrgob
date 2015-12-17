@@ -9,7 +9,7 @@ import (
 
 	"b1/app"
 
-	"github.com/Zemanta/gomr/runner"
+	"github.com/Zemanta/mrgob/runner"
 )
 
 func main() {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Zemanta/gomr/job"
+	"github.com/Zemanta/mrgob/job"
 )
 
 type HadoopApplicationStatus struct {

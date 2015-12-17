@@ -7,7 +7,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/Zemanta/gomr/job"
+	"github.com/Zemanta/mrgob/job"
 )
 
 func TestRawTester(t *testing.T) {

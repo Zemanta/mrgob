@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Zemanta/gomr/job"
+	"github.com/Zemanta/mrgob/job"
 )
 
 type testSorter struct {

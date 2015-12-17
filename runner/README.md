@@ -1,6 +1,6 @@
 # runner
 --
-    import "github.com/Zemanta/gomr/runner"
+    import "github.com/Zemanta/mrgob/runner"
 
 
 ## Usage

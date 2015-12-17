@@ -1,4 +1,4 @@
-# Go MapReduce
+# The Go MapReduce library
 
 Tools and helpers for writing and running MapReduce jobs on Hadoop and EMR.
 
@@ -21,19 +21,19 @@ Supported job types
 
 ### Logging
 
-job.Log is an instance of go's logger struct which logs each line with a prefix to stderr so we can extract our log lines in the runner.
+job.Log is an instance of go's logger struct which logs each line with a prefix to stderr so the runner can extract them.
 
     job.Log.Print("My log line")
 
 ### Counters
 
-job.Count outputs a counter line to stderr to a predefined counter group so we can fetch them in the runner.
+job.Count writes a counter line to stderr with the predefined counter group so the runner can fetch them.
 
     job.Count("myCounter", 1)
 
 ### Testing jobs
 
-For testing mappers and reducers use tester.Test\*Job function which simulate Hadoop mapreduce by streming input into mapper, sorting mapper's output, streaming it to reducer and writing reducer's output to output writer.
+For testing mappers and reducers use tester.Test\*Job functions which simulate mapreduce by streming input into mapper, sorting mapper's output, streaming it to the reducer and writing reducer's output to the defined output writer.
 
     func TestRawJob(input io.Reader, output io.Writer, mapper func(io.Writer, io.Reader), reducer func(io.Writer, io.Reader))
 
@@ -44,19 +44,18 @@ For testing mappers and reducers use tester.Test\*Job function which simulate Ha
 
 ### Examples:
 
-- [Raw wordcount job](https://github.com/Zemanta/gomr/blob/master/_examples/wordcount_raw/wordcount.go)
-- [Byte mr wordcount job](https://github.com/Zemanta/gomr/blob/master/_examples/wordcount_byte/wordcount.go)
-- [Json mr wordcount job](https://github.com/Zemanta/gomr/blob/master/_examples/wordcount_json/wordcount.go)
+- [Raw wordcount job](https://github.com/Zemanta/mrgob/blob/master/_examples/wordcount_raw/wordcount.go)
+- [Byte mr wordcount job](https://github.com/Zemanta/mrgob/blob/master/_examples/wordcount_byte/wordcount.go)
+- [Json mr wordcount job](https://github.com/Zemanta/mrgob/blob/master/_examples/wordcount_json/wordcount.go)
 
 
-[API reference for job package](https://github.com/Zemanta/gomr/blob/master/job/README.md)
+[API reference the for job package](https://github.com/Zemanta/mrgob/blob/master/job/README.md)
 
 ## Running Jobs
 
 ## Configuring Hadoop provider
 
-GOMR needs a way to connect to your Hadoop cluster via api and ssh.
-At the moment it only supports EMR. It will query aws for EMR info and select the newest running cluster matching the name.
+MrGob requirest both api (for fetching job status) and ssh (for executing commands) access to the cluster. At the moment the only supported provider is AWS EMR.
 
 	awsConfig := &aws.Config{
 		Region: &app.Env.AWS_REGION,
@@ -100,14 +99,13 @@ Each command can be run only once.
 
 ### Example:
 
-- [Raw job runner](https://github.com/Zemanta/gomr/blob/master/_examples/run_raw/run.go)
+- [Raw job runner](https://github.com/Zemanta/mrgob/blob/master/_examples/run_raw/run.go)
 
 ## Executing non-mapreduce commands
 
 	err := runner.ExecOnCluster(retries, "aws", "s3", "ls", "/path")
 
-[API reference for runner package](https://github.com/Zemanta/gomr/blob/master/runner/README.md)
+[API reference for the runner package](https://github.com/Zemanta/mrgob/blob/master/runner/README.md)
 
-## General life advice
 
-In past I having bigdata problem. Since deploy Hadoop now have bigdata problem and BigDataProblemMapTaskImpl.
+![Right tool for the right gob](https://media.giphy.com/media/iJWULINtShOnK/giphy.gif)

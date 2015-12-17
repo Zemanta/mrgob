@@ -1,12 +1,12 @@
 # job
 --
-    import "github.com/Zemanta/gomr/job"
+    import "github.com/Zemanta/mrgob/job"
 
 
 ## Usage
 
 ```go
-var AppCounterGroup = "GOMR"
+var AppCounterGroup = "mrgob"
 ```
 
 ```go
@@ -20,7 +20,7 @@ Log is an instance of go's logger which prefixes all log lines so they can be
 collected in the runner.
 
 ```go
-var MRLogPrefix = "[GOMR]"
+var MRLogPrefix = "[mrgob]"
 ```
 
 #### func  Count
