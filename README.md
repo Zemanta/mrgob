@@ -31,6 +31,12 @@ job.Count writes a counter line to stderr with the predefined counter group so t
 
     job.Count("myCounter", 1)
 
+### Job Config
+
+job.Config retrieves and decodes the job config passed from the runner.
+
+    func Config(target interface{}) error
+
 ### Testing jobs
 
 For testing mappers and reducers use tester.Test\*Job functions which simulate mapreduce by streming input into mapper, sorting mapper's output, streaming it to the reducer and writing reducer's output to the defined output writer.

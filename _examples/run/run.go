@@ -43,6 +43,8 @@ func main() {
 
 		JobPath: "s3://b1-eventlog-sync/tmp/" + bin,
 
+		JobConfig: map[string]string{"test": "123"},
+
 		ReduceTasks: 1,
 		MapTasks:    1,
 

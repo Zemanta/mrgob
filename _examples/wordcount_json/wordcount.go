@@ -14,7 +14,13 @@ func main() {
 }
 
 func runMapper(w *job.JsonKVWriter, r io.Reader) {
-	job.Log.Print("Mapper run")
+	cfg := map[string]string{}
+	err := job.Config(&cfg)
+	if err != nil {
+		job.Log.Fatal(err)
+	}
+
+	job.Log.Print("Mapper run", cfg)
 
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {

@@ -1,8 +1,10 @@
 package runner
 
 import (
+	"encoding/json"
 	"fmt"
 	"path"
+	"strconv"
 )
 
 /*
@@ -36,7 +38,7 @@ type MapReduceConfig struct {
 	// S3 or HDFS path to the executable job implementing "Init*Job" interface.
 	JobPath string
 
-	// Job configuration that will be made available in mapper and reducer jobs (not implemented yet).
+	// Job configuration that will be made available in mapper and reducer jobs.
 	JobConfig interface{}
 
 	// List of input files.
@@ -78,6 +80,20 @@ func (c *MapReduceConfig) getProperyArg(k string, v interface{}) []string {
 		}
 	}
 	return nil
+}
+
+func (c *MapReduceConfig) getConfigProperty() ([]string, error) {
+	b, err := json.Marshal(c.JobConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	str := string(b)
+	str = strconv.Quote(str)
+
+	args := []string{"-cmdenv", fmt.Sprintf("mrgob.config=%s", str)}
+
+	return args, nil
 }
 
 func (c *MapReduceConfig) getArgs() ([]string, error) {
@@ -124,6 +140,14 @@ func (c *MapReduceConfig) getArgs() ([]string, error) {
 	}
 
 	args = append(args, c.getArg("-output", c.Output)...)
+
+	if c.JobConfig != nil {
+		a, err := c.getConfigProperty()
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, a...)
+	}
 
 	return args, nil
 }

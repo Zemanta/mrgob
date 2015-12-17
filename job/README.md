@@ -6,11 +6,15 @@
 ## Usage
 
 ```go
-var AppCounterGroup = "mrgob"
+var AppCounterGroup = "GOMR"
 ```
 
 ```go
 var ErrInvalidLine = fmt.Errorf("Invalid line")
+```
+
+```go
+var ErrMissingJobConfig = fmt.Errorf("Missing job config")
 ```
 
 ```go
@@ -20,8 +24,15 @@ Log is an instance of go's logger which prefixes all log lines so they can be
 collected in the runner.
 
 ```go
-var MRLogPrefix = "[mrgob]"
+var MRLogPrefix = "[GOMR]"
 ```
+
+#### func  Config
+
+```go
+func Config(target interface{}) error
+```
+Config retrieves and decodes the job config passed from the runner.
 
 #### func  Count
 
