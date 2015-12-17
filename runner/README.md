@@ -7,13 +7,6 @@
 
 ```go
 var (
-	ErrClusterNotFound  = fmt.Errorf("EMR cluster not found")
-	ErrInstanceNotFound = fmt.Errorf("EMR instance not found")
-)
-```
-
-```go
-var (
 	HadoopStatusIdle    HadoopStatus = 0
 	HadoopStatusRunning HadoopStatus = 1
 	HadoopStatusSuccess HadoopStatus = 2
@@ -36,39 +29,7 @@ func ExecOnCluster(retries int, arguments ...string) error
 #### func  SetDefaultHadoopProvider
 
 ```go
-func SetDefaultHadoopProvider(p HadoopProvider)
-```
-
-#### type EmrProvider
-
-```go
-type EmrProvider struct {
-}
-```
-
-
-#### func  NewEmrProvider
-
-```go
-func NewEmrProvider(clusterName string, sshConfig *ssh.ClientConfig, awsConfig *aws.Config) *EmrProvider
-```
-
-#### func (*EmrProvider) GetMasterHost
-
-```go
-func (e *EmrProvider) GetMasterHost() (master string, err error)
-```
-
-#### func (*EmrProvider) GetMasterSSHClient
-
-```go
-func (e *EmrProvider) GetMasterSSHClient() (*ssh.Client, error)
-```
-
-#### func (*EmrProvider) GetNextSSHClient
-
-```go
-func (e *EmrProvider) GetNextSSHClient() (*ssh.Client, error)
+func SetDefaultHadoopProvider(p provider.HadoopProvider)
 ```
 
 #### type HadoopApplicationLogs
@@ -297,17 +258,6 @@ type HadoopJobCountersGroup map[string]HadoopJobCounterData
 ```go
 func (c HadoopJobCountersGroup) String() string
 ```
-
-#### type HadoopProvider
-
-```go
-type HadoopProvider interface {
-	GetMasterHost() (string, error)
-	GetMasterSSHClient() (*ssh.Client, error)
-	GetNextSSHClient() (*ssh.Client, error)
-}
-```
-
 
 #### type HadoopRun
 

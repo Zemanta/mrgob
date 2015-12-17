@@ -10,8 +10,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Zemanta/mrgob/runner/provider"
+
 	"golang.org/x/crypto/ssh"
 )
+
+var hadoopProvider provider.HadoopProvider
+
+func SetDefaultHadoopProvider(p provider.HadoopProvider) {
+	hadoopProvider = p
+}
 
 type HadoopStatus int
 
