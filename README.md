@@ -70,7 +70,27 @@ MrGob requirest both api (for fetching job status) and ssh (for executing comman
 
 ### Creating new Hadoop command
 
-    cmd := runner.NewMapReduce(retries, args...)
+1. Passing command line arguments directly
+
+    cmd := runner.NewRawMapReduce(args...)
+
+2. Using MapReduceConfig
+
+	cmd, err := runner.NewMapReduce(&runner.MapReduceConfig{
+		Name: "job-name",
+
+		JobPath: "s3://bucket/jobFile",
+
+		ReduceTasks: 1,
+		MapTasks:    1,
+
+		Input:  []string{"s3://bucket/files/"},
+		Output: "s3://bucker/output/",
+
+		CustomProperties: map[string]string{
+			"mapreduce.job.queuename": "myqueue",
+		},
+	})
 
 ### Running commands
 
@@ -100,6 +120,7 @@ Each command can be run only once.
 ### Example:
 
 - [Raw job runner](https://github.com/Zemanta/mrgob/blob/master/_examples/run_raw/run.go)
+- [Config job runner](https://github.com/Zemanta/mrgob/blob/master/_examples/run/run.go)
 
 ## Executing non-mapreduce commands
 
