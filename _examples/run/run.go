@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -38,18 +38,25 @@ func main() {
 	runner.SetDefaultHadoopProvider(provider.NewEmrProvider("eventlog-processor", sshConfig, awsConfig))
 
 	bin := "wordcount_json"
-	cmd := runner.NewRawMapReduce("hadoop-streaming",
-		"-D", "mapred.job.name=hamax-text",
-		"-D", "mapred.reduce.tasks=1",
-		"-D", "mapred.map.tasks=1",
-		"-D", "mapreduce.job.queuename=realtime",
-		//"-D", "mapreduce.job.ubertask.enable=true",
-		"-files", "s3://b1-eventlog-sync/tmp/"+bin,
-		"-input", "s3://b1-eventlog-sync/tmp/monkeys.txt",
-		"-output", "s3://b1-eventlog-sync/tmp/hamax-test1",
-		"-mapper", bin+" --stage=mapper",
-		"-reducer", bin+" --stage=reducer",
-	)
+	cmd, err := runner.NewMapReduce(&runner.MapReduceConfig{
+		Name: "hamax-text",
+
+		JobPath: "s3://b1-eventlog-sync/tmp/" + bin,
+
+		ReduceTasks: 1,
+		MapTasks:    1,
+
+		Input:  []string{"s3://b1-eventlog-sync/tmp/monkeys.txt"},
+		Output: "s3://b1-eventlog-sync/tmp/hamax-test1",
+
+		CustomProperties: map[string]string{
+			"mapreduce.job.queuename": "realtime",
+		},
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	cmd.Run()
 
@@ -57,6 +64,8 @@ func main() {
 	//cmd.FetchJobCounters()
 	//cmd.FetchApplicationLogs()
 
-	_, err := cmd.FetchDebugData()
-	fmt.Println(err)
+	_, err = cmd.FetchDebugData()
+	if err != nil {
+		log.Fatal(err)
+	}
 }

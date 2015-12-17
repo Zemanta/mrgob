@@ -7,6 +7,14 @@
 
 ```go
 var (
+	ErrMissingJobPath = fmt.Errorf("Missing job path")
+	ErrMissingInput   = fmt.Errorf("Missing input")
+	ErrMissingOutput  = fmt.Errorf("Missing output")
+)
+```
+
+```go
+var (
 	HadoopStatusIdle    HadoopStatus = 0
 	HadoopStatusRunning HadoopStatus = 1
 	HadoopStatusSuccess HadoopStatus = 2
@@ -121,7 +129,13 @@ type HadoopCommand struct {
 #### func  NewMapReduce
 
 ```go
-func NewMapReduce(arguments ...string) *HadoopCommand
+func NewMapReduce(c *MapReduceConfig) (*HadoopCommand, error)
+```
+
+#### func  NewRawMapReduce
+
+```go
+func NewRawMapReduce(arguments ...string) *HadoopCommand
 ```
 
 #### func (*HadoopCommand) ApplicationId
@@ -307,4 +321,35 @@ func (hr *HadoopRun) FetchJobCounters() (HadoopJobCounters, error)
 
 ```go
 type HadoopStatus int
+```
+
+
+#### type MapReduceConfig
+
+```go
+type MapReduceConfig struct {
+	// Job name.
+	Name string
+
+	// Number of reducers.
+	ReduceTasks int
+	// Number of mappers.
+	MapTasks int
+
+	// S3 or HDFS path to the executable job implementing "Init*Job" interface.
+	JobPath string
+
+	// Job configuration that will be made available in mapper and reducer jobs (not implemented yet).
+	JobConfig interface{}
+
+	// List of input files.
+	Input []string
+	// Output directory.
+	Output string
+
+	// Other custom -D properties passes to the job.
+	CustomProperties map[string]string
+	// Other files that will be downloaded next to the executable before running the job.
+	AdditionalFiles []string
+}
 ```

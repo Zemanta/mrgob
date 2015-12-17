@@ -63,12 +63,21 @@ type HadoopCommand struct {
 	status HadoopStatus
 }
 
-func NewMapReduce(arguments ...string) *HadoopCommand {
+func NewRawMapReduce(arguments ...string) *HadoopCommand {
 	hd := &HadoopCommand{
 		args: arguments,
 	}
 	hd.done.Lock()
 	return hd
+}
+
+func NewMapReduce(c *MapReduceConfig) (*HadoopCommand, error) {
+	args, err := c.getArgs()
+	if err != nil {
+		return nil, err
+	}
+
+	return NewRawMapReduce(args...), nil
 }
 
 func (hc *HadoopCommand) SetRetries(n int) {
