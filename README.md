@@ -72,7 +72,7 @@ MrGob requirest both api (for fetching job status) and ssh (for executing comman
 
 1. Passing command line arguments directly
 
-    cmd := runner.NewRawMapReduce(args...)
+	cmd := runner.NewRawMapReduce(args...)
 
 2. Using MapReduceConfig
 
