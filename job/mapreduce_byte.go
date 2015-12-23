@@ -20,26 +20,29 @@ var ErrInvalidLine = fmt.Errorf("Invalid line")
 
 // ByteKVWriter encodes and writes key, value pairs to the writer
 type ByteKVWriter struct {
-	w    io.Writer
-	encw *encodeWriter
+	w    *bufio.Writer
+	enck *encodeWriter
+	encv *encodeWriter
 }
 
 func NewByteKVWriter(w io.Writer) *ByteKVWriter {
+	bufw := bufio.NewWriter(w)
 	return &ByteKVWriter{
-		w:    w,
-		encw: newEncodeWriter(w),
+		w:    bufw,
+		enck: newEncodeWriter(bufw, true),
+		encv: newEncodeWriter(bufw, false),
 	}
 }
 
 // Write encodes both key and value
 func (w *ByteKVWriter) Write(k []byte, v []byte) error {
-	if _, err := w.encw.Write(k); err != nil {
+	if _, err := w.enck.Write(k); err != nil {
 		return err
 	}
 	if _, err := w.w.Write(tab); err != nil {
 		return err
 	}
-	if _, err := w.encw.Write(v); err != nil {
+	if _, err := w.encv.Write(v); err != nil {
 		return err
 	}
 	if _, err := w.w.Write(nl); err != nil {
@@ -57,6 +60,10 @@ func (w *ByteKVWriter) WriteKey(k []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (w *ByteKVWriter) Flush() {
+	w.w.Flush()
 }
 
 // ByteKVReader streams key, value pairs from the reader and merges them for easier consumption by the reducer

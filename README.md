@@ -35,7 +35,8 @@ job.Count writes a counter line to stderr with the predefined counter group so t
 
 job.Config retrieves and decodes the job config passed from the runner.
 
-    func Config(target interface{}) error
+    cfg := map[string]string{}
+    err := job.Config(&cfg)
 
 ### Testing jobs
 
@@ -90,6 +91,8 @@ Using MapReduceConfig
 
 		ReduceTasks: 1,
 		MapTasks:    1,
+
+        JobConfig: map[string]string{"test": "123"},
 
 		Input:  []string{"s3://bucket/files/"},
 		Output: "s3://bucker/output/",

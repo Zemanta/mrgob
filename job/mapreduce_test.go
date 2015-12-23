@@ -23,12 +23,25 @@ func TestEncodeDecodeBytes(t *testing.T) {
 	}
 }
 
-func TestEncodeWriter(t *testing.T) {
+func TestEncodeWriterTab(t *testing.T) {
 	in := "\nAA\tBB\\t\n\\a"
 	exp := "\\nAA\\tBB\\\\t\\n\\\\a"
 	out := &bytes.Buffer{}
 
-	w := newEncodeWriter(out)
+	w := newEncodeWriter(out, true)
+	w.Write([]byte(in))
+
+	if out.String() != exp {
+		t.Errorf("%s\n!=\n%s", out, exp)
+	}
+}
+
+func TestEncodeWriterNoTab(t *testing.T) {
+	in := "\nAA\tBB\\t\n\\a"
+	exp := "\\nAA\tBB\\\\t\\n\\\\a"
+	out := &bytes.Buffer{}
+
+	w := newEncodeWriter(out, false)
 	w.Write([]byte(in))
 
 	if out.String() != exp {
@@ -43,7 +56,7 @@ func TestByteWriter(t *testing.T) {
 	expected := `key1	string
 key2
 key\n2
-key\n3	t\ts\t
+key\n3	t	s	
 `
 
 	w.Write([]byte("key1"), []byte("string"))
@@ -53,6 +66,8 @@ key\n3	t\ts\t
 	v1 := []byte("t\ts\t")
 	v2 := []byte("t\ts\t")
 	w.Write([]byte("key\n3"), v1)
+
+	w.Flush()
 
 	if buf.String() != expected {
 		t.Errorf("Byte writer error:\n%s \n!=\n%s", buf.String(), expected)
@@ -113,6 +128,8 @@ func TestJsonWriter(t *testing.T) {
 	w.Write("key1", "string")
 	w.WriteKey("key2")
 	w.Write("key3", struct{ V int }{V: 123})
+
+	w.Flush()
 
 	if buf.String() != expected {
 		t.Errorf("Json writer error:\n%s \n!=\n%s", buf.String(), expected)
@@ -186,20 +203,22 @@ func BenchmarkByteWriter(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		w.Write(k, v)
 	}
+	w.Flush()
 }
 
 func BenchmarkByteSpecialCharsWriter(b *testing.B) {
 	buf := &bytes.Buffer{}
 	w := NewByteKVWriter(buf)
 
-	k := []byte("MY\tNORMAL\nSIZED\tKEY")
-	v := []byte("AAAAAAAAAAAAA\nBIIIIIIIIIIIIIIIIIIIIIT\tLOOOOOOOOOOOOOOOOOOOOOOOGER\nVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALUE")
+	k := []byte("MY\tNRMAL\nSZED\tKY")
+	v := []byte("AAAAAAAAAAAAA\nBIIIIIIIIIIIIIIIIIIIIT\tLOOOOOOOOOOOOOOOOOOOOOOOGER\nVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALUE")
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		w.Write(k, v)
 	}
+	w.Flush()
 }
 
 func BenchmarkJsonWriter(b *testing.B) {
@@ -218,6 +237,7 @@ func BenchmarkJsonWriter(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		w.Write(k, v)
 	}
+	w.Flush()
 }
 
 func BenchmarkByteReader(b *testing.B) {
@@ -231,6 +251,7 @@ func BenchmarkByteReader(b *testing.B) {
 		rk := fmt.Sprintf("%s%d", k, rand.Intn(5))
 		w.Write(rk, v)
 	}
+	w.Flush()
 
 	r := NewByteKVReader(buf)
 
@@ -264,6 +285,7 @@ func BenchmarkByteSpecialCharsReader(b *testing.B) {
 		rk := fmt.Sprintf("%s%d", k, rand.Intn(5))
 		w.Write(rk, v)
 	}
+	w.Flush()
 
 	r := NewByteKVReader(buf)
 
@@ -303,6 +325,7 @@ func BenchmarkJsonReader(b *testing.B) {
 		rk := fmt.Sprintf("%s%d", k, rand.Intn(5))
 		w.Write(rk, v)
 	}
+	w.Flush()
 
 	key := new(string)
 
@@ -345,6 +368,7 @@ func BenchmarkSimpleJsonReader(b *testing.B) {
 		rk := fmt.Sprintf("%s%d", k, rand.Intn(5))
 		w.Write(rk, v)
 	}
+	w.Flush()
 
 	key := new(string)
 

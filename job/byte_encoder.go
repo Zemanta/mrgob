@@ -58,12 +58,14 @@ func decodeBytes(bs []byte) []byte {
 }
 
 type encodeWriter struct {
-	w io.Writer
+	w   io.Writer
+	tab bool
 }
 
-func newEncodeWriter(w io.Writer) *encodeWriter {
+func newEncodeWriter(w io.Writer, tab bool) *encodeWriter {
 	return &encodeWriter{
-		w: w,
+		w:   w,
+		tab: tab,
 	}
 }
 
@@ -74,7 +76,7 @@ func (e *encodeWriter) Write(bs []byte) (int, error) {
 	for ; i < len(bs); i++ {
 		var repl []byte
 
-		if bs[i] == '\t' {
+		if e.tab && bs[i] == '\t' {
 			repl = esctab
 		} else if bs[i] == '\n' {
 			repl = escnl

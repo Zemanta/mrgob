@@ -22,17 +22,18 @@ func (w *keyJsonWriter) Write(b []byte) (int, error) {
 
 // JsonKVWriter encodes and writes key, value pairs to the writer
 type JsonKVWriter struct {
-	w io.Writer
+	w *bufio.Writer
 
 	valuew *json.Encoder
 	keyw   *json.Encoder
 }
 
 func NewJsonKVWriter(w io.Writer) *JsonKVWriter {
+	bufw := bufio.NewWriter(w)
 	return &JsonKVWriter{
-		w:      w,
-		valuew: json.NewEncoder(w),
-		keyw:   json.NewEncoder(&keyJsonWriter{w}),
+		w:      bufw,
+		valuew: json.NewEncoder(bufw),
+		keyw:   json.NewEncoder(&keyJsonWriter{bufw}),
 	}
 }
 
@@ -42,7 +43,9 @@ func (w *JsonKVWriter) Write(k interface{}, v interface{}) error {
 		return err
 	}
 
-	w.w.Write(tab)
+	if _, err := w.w.Write(tab); err != nil {
+		return err
+	}
 
 	return w.valuew.Encode(v)
 }
@@ -50,6 +53,10 @@ func (w *JsonKVWriter) Write(k interface{}, v interface{}) error {
 // WriteKey only accepts a key in case your mapper doesn't require values
 func (w *JsonKVWriter) WriteKey(k interface{}) error {
 	return w.valuew.Encode(k)
+}
+
+func (w *JsonKVWriter) Flush() {
+	w.w.Flush()
 }
 
 // JsonKVReader streams key, value pairs from the reader and merges them for easier consumption by the reducer
