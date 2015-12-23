@@ -53,7 +53,7 @@ func (w *ByteKVWriter) Write(k []byte, v []byte) error {
 
 // WriteKey only accepts a key in case your mapper doesn't require values
 func (w *ByteKVWriter) WriteKey(k []byte) error {
-	if _, err := w.w.Write(encodeBytes(k)); err != nil {
+	if _, err := w.enck.Write(k); err != nil {
 		return err
 	}
 	if _, err := w.w.Write(nl); err != nil {
