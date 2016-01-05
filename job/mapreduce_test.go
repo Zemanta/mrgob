@@ -125,6 +125,8 @@ key3	val4
 		key, vr := r.Key()
 		res += string(key)
 
+		key1str := string(key)
+
 		for vr.Scan() {
 			val := vr.Value()
 			res += string(val)
@@ -132,6 +134,11 @@ key3	val4
 
 		if err := vr.Err(); err != nil {
 			t.Error(err)
+		}
+
+		key2, _ := r.Key()
+		if key1str != string(key2) {
+			t.Error("Key changed before scan")
 		}
 	}
 
@@ -204,6 +211,12 @@ func TestJsonReader(t *testing.T) {
 
 		if err := vr.Err(); err != nil {
 			t.Error(err)
+		}
+
+		key2 := new(string)
+		r.Key(key2)
+		if *key != *key2 {
+			t.Errorf("Key changed before scan: %s != %s", *key, *key2)
 		}
 	}
 

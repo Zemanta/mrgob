@@ -94,7 +94,7 @@ func (r *JsonKVReader) Scan() bool {
 
 // Key decodes the current key into the target interface and returns a reader for all values belonging to this key.
 func (r *JsonKVReader) Key(target interface{}) (*JsonValueReader, error) {
-	return r.vr, json.Unmarshal(r.vr.key, target)
+	return r.vr, json.Unmarshal(r.key, target)
 }
 
 // Err returns the first non-EOF error that was encountered by the reader.
