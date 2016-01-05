@@ -94,7 +94,9 @@ Err returns the first non-EOF error that was encountered by the reader.
 ```go
 func (r *ByteKVReader) Key() ([]byte, *ByteValueReader)
 ```
-Key returns decoded key and reader for all values belonging to this key.
+Key returns decoded key and reader for all values belonging to this key. The
+underlying array may point to data that will be overwritten by a subsequent call
+to Scan. It does no allocation.
 
 #### func (*ByteKVReader) Scan
 

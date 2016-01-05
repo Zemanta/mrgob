@@ -97,6 +97,7 @@ func (r *ByteKVReader) Scan() bool {
 }
 
 // Key returns decoded key and reader for all values belonging to this key.
+// The underlying array may point to data that will be overwritten by a subsequent call to Scan. It does no allocation.
 func (r *ByteKVReader) Key() ([]byte, *ByteValueReader) {
 	return decodeBytes(r.vr.key), r.vr
 }
