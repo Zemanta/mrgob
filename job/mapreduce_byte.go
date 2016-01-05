@@ -162,6 +162,7 @@ func (r *ByteValueReader) Scan() bool {
 }
 
 // Value decodes the current value and returns it.
+// The underlying array may point to data that will be overwritten by a subsequent call to Scan. It does no allocation.
 func (r *ByteValueReader) Value() []byte {
 	return decodeBytes(r.value)
 }

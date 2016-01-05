@@ -42,11 +42,19 @@ job.Config retrieves and decodes the job config passed from the runner.
 
 For testing mappers and reducers use tester.Test\*Job functions which simulate mapreduce by streming input into mapper, sorting mapper's output, streaming it to the reducer and writing reducer's output to the defined output writer.
 
-    func TestRawJob(input io.Reader, output io.Writer, mapper func(io.Writer, io.Reader), reducer func(io.Writer, io.Reader))
+    func TestRawJob(input []io.Reader, output io.Writer, mapper func(io.Writer, io.Reader), reducer func(io.Writer, io.Reader))
 
-    func TestByteJob(input io.Reader, output io.Writer, mapper func(*ByteKVWriter, io.Reader), reducer func(io.Writer, *ByteKVReader))
+    func TestByteJob(input []io.Reader, output io.Writer, mapper func(*ByteKVWriter, io.Reader), reducer func(io.Writer, *ByteKVReader))
 
-    func TestJsonJob(input io.Reader, output io.Writer, mapper func(*JsonKVWriter, io.Reader), reducer func(io.Writer, *JsonKVReader))
+    func TestJsonJob(input []io.Reader, output io.Writer, mapper func(*JsonKVWriter, io.Reader), reducer func(io.Writer, *JsonKVReader))
+
+If input reader is an instance of tester.Reader, you can also pass in the filename which will be set as an env variable (mapreduce_map_input_file) in mapper.
+
+	files := []io.Reader{
+		&tester.Reader{Filename: "filename", Data: someReader},
+	}
+
+	tester.TestByteJob(files, out, mapper, reducer)
 
 
 ### Examples:

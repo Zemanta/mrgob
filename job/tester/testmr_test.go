@@ -50,7 +50,7 @@ word2	1
 		fmt.Fprintf(w, "%s\t%d\n", lp, c)
 	}
 
-	TestRawJob(in, out, mapper, reducer)
+	TestRawJob([]io.Reader{in}, out, mapper, reducer)
 
 	if expected != out.String() {
 		t.Errorf("\n%s\n!=\n%s", out.String(), expected)
@@ -90,7 +90,7 @@ word2	1
 		}
 	}
 
-	TestByteJob(in, out, mapper, reducer)
+	TestByteJob([]io.Reader{in}, out, mapper, reducer)
 
 	if expected != out.String() {
 		t.Errorf("\n%s\n!=\n%s", out.String(), expected)
@@ -134,7 +134,7 @@ word2	1
 		}
 	}
 
-	TestJsonJob(in, out, mapper, reducer)
+	TestJsonJob([]io.Reader{in}, out, mapper, reducer)
 
 	if expected != out.String() {
 		t.Errorf("\n%s\n!=\n%s", out.String(), expected)
