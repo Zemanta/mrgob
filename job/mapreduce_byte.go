@@ -70,6 +70,7 @@ func (w *ByteKVWriter) Flush() {
 type ByteKVReader struct {
 	scanner *bufio.Scanner
 	vr      *ByteValueReader
+	key     []byte
 }
 
 func NewByteKVReader(r io.Reader) *ByteKVReader {
@@ -84,6 +85,7 @@ func (r *ByteKVReader) Scan() bool {
 		r.vr = &ByteValueReader{scanner: r.scanner}
 		sc := r.vr.Scan()
 		r.vr.skip = 1
+		r.key = copyResize(r.key, r.vr.key)
 		return sc
 	}
 
@@ -93,13 +95,16 @@ func (r *ByteKVReader) Scan() bool {
 
 	r.vr.err = nil
 	r.vr.skip = 1
+
+	r.key = copyResize(r.key, r.vr.key)
+
 	return !r.vr.done
 }
 
 // Key returns decoded key and reader for all values belonging to this key.
 // The underlying array may point to data that will be overwritten by a subsequent call to Scan. It does no allocation.
 func (r *ByteKVReader) Key() ([]byte, *ByteValueReader) {
-	return decodeBytes(r.vr.key), r.vr
+	return decodeBytes(r.key), r.vr
 }
 
 // Err returns the first non-EOF error that was encountered by the reader.
@@ -152,7 +157,10 @@ func (r *ByteValueReader) Scan() bool {
 		ok = false
 	}
 
-	r.key = key
+	if len(r.key) == 0 || !ok {
+		r.key = copyResize(r.key, key)
+	}
+
 	if len(line) > split {
 		r.value = line[split+1:]
 	} else {

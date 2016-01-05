@@ -8,6 +8,34 @@ import (
 	"testing"
 )
 
+func TestCopyResize(t *testing.T) {
+	src := []byte{1, 2, 3}
+
+	dst := make([]byte, 3)
+	dst1 := copyResize(dst, src)
+	if !bytes.Equal(src, dst1) {
+		t.Error("Copy resize not equal")
+	}
+	if !bytes.Equal(dst, dst1) {
+		t.Error("Copy resize shouldn't resize")
+	}
+
+	dst = make([]byte, 0, 3)
+	dst1 = copyResize(dst, src)
+	if !bytes.Equal(src, dst1) {
+		t.Error("Copy resize not equal")
+	}
+	if !bytes.Equal(dst[0:3], dst1) {
+		t.Error("Copy resize shouldn't resize")
+	}
+
+	dst = make([]byte, 2)
+	dst1 = copyResize(dst, src)
+	if !bytes.Equal(src, dst1) {
+		t.Error("Copy resize not equal")
+	}
+}
+
 func TestEncodeDecodeBytes(t *testing.T) {
 	in := "\nAA\tBB\\t\n\\"
 	exp := "\\nAA\\tBB\\\\t\\n\\\\"

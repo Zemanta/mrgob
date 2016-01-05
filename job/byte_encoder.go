@@ -109,3 +109,13 @@ func (e *encodeWriter) Write(bs []byte) (int, error) {
 
 	return n, nil
 }
+
+func copyResize(dst, src []byte) []byte {
+	if cap(dst) >= len(src) {
+		dst = dst[0:len(src)]
+	} else {
+		dst = make([]byte, len(src))
+	}
+	copy(dst, src)
+	return dst
+}

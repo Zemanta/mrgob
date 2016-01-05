@@ -63,6 +63,7 @@ func (w *JsonKVWriter) Flush() {
 type JsonKVReader struct {
 	scanner *bufio.Scanner
 	vr      *JsonValueReader
+	key     []byte
 }
 
 func NewJsonKVReader(r io.Reader) *JsonKVReader {
@@ -77,6 +78,7 @@ func (r *JsonKVReader) Scan() bool {
 		r.vr = &JsonValueReader{scanner: r.scanner}
 		sc := r.vr.Scan()
 		r.vr.skip = 1
+		r.key = copyResize(r.key, r.vr.key)
 		return sc
 	}
 
@@ -86,6 +88,7 @@ func (r *JsonKVReader) Scan() bool {
 
 	r.vr.err = nil
 	r.vr.skip = 1
+	r.key = copyResize(r.key, r.vr.key)
 	return !r.vr.done
 }
 
@@ -144,7 +147,10 @@ func (r *JsonValueReader) Scan() bool {
 		ok = false
 	}
 
-	r.key = key
+	if len(r.key) == 0 || !ok {
+		r.key = copyResize(r.key, key)
+	}
+
 	if len(line) > split {
 		r.value = line[split+1:]
 	} else {
