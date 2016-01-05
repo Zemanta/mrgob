@@ -122,6 +122,12 @@ ByteKVWriter encodes and writes key, value pairs to the writer
 func NewByteKVWriter(w io.Writer) *ByteKVWriter
 ```
 
+#### func (*ByteKVWriter) Flush
+
+```go
+func (w *ByteKVWriter) Flush()
+```
+
 #### func (*ByteKVWriter) Write
 
 ```go
@@ -165,7 +171,9 @@ the Value method.
 ```go
 func (r *ByteValueReader) Value() []byte
 ```
-Value decodes the current value and returns it.
+Value decodes the current value and returns it. The underlying array may point
+to data that will be overwritten by a subsequent call to Scan. It does no
+allocation.
 
 #### type JsonKVReader
 
@@ -222,6 +230,12 @@ JsonKVWriter encodes and writes key, value pairs to the writer
 
 ```go
 func NewJsonKVWriter(w io.Writer) *JsonKVWriter
+```
+
+#### func (*JsonKVWriter) Flush
+
+```go
+func (w *JsonKVWriter) Flush()
 ```
 
 #### func (*JsonKVWriter) Write
