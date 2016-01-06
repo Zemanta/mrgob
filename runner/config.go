@@ -91,7 +91,7 @@ func (c *MapReduceConfig) getConfigProperty() ([]string, error) {
 	str := string(b)
 	str = strconv.Quote(str)
 
-	args := []string{"-cmdenv", fmt.Sprintf("mrgob.config=%s", str)}
+	args := []string{"-cmdenv", fmt.Sprintf("mrgob.config=\"%s\"", str)}
 
 	return args, nil
 }
