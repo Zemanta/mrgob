@@ -68,21 +68,21 @@ func (w *ByteKVWriter) Flush() {
 
 // ByteKVReader streams key, value pairs from the reader and merges them for easier consumption by the reducer
 type ByteKVReader struct {
-	scanner *bufio.Scanner
-	vr      *ByteValueReader
-	key     []byte
+	reader *bufio.Reader
+	vr     *ByteValueReader
+	key    []byte
 }
 
 func NewByteKVReader(r io.Reader) *ByteKVReader {
 	return &ByteKVReader{
-		scanner: bufio.NewScanner(r),
+		reader: bufio.NewReader(r),
 	}
 }
 
 // Scan advances the reader to the next key, which will then be available through the Key method. It returns false when the scan stops, either by reaching the end of the input or an error. After Scan returns false, the Err method will return any error that occurred during scanning, except that if it was io.EOF, Err will return nil.
 func (r *ByteKVReader) Scan() bool {
 	if r.vr == nil {
-		r.vr = &ByteValueReader{scanner: r.scanner}
+		r.vr = &ByteValueReader{reader: r.reader}
 		sc := r.vr.Scan()
 		r.vr.skip = 1
 		r.key = copyResize(r.key, r.vr.key)
@@ -112,12 +112,12 @@ func (r *ByteKVReader) Err() error {
 	if r.vr != nil {
 		return r.vr.Err()
 	}
-	return r.scanner.Err()
+	return nil
 }
 
 // ByteValueReader streams values for the specified key.
 type ByteValueReader struct {
-	scanner *bufio.Scanner
+	reader *bufio.Reader
 
 	skip int
 	done bool
@@ -136,13 +136,20 @@ func (r *ByteValueReader) Scan() bool {
 
 	// skip empty lines
 	var line []byte
+	var err error
 	for len(line) == 0 {
-		if !r.scanner.Scan() {
+		line, err = r.reader.ReadBytes('\n') // does allocs, TODO fix
+		if err == io.EOF {
 			r.done = true
 			return false
+		} else if err != nil {
+			r.err = err
+			return false
 		}
-
-		line = r.scanner.Bytes()
+		n := len(line)
+		if n > 0 && line[n-1] == '\n' {
+			line = line[:n-1]
+		}
 	}
 
 	split := bytes.IndexByte(line, '\t')
@@ -178,8 +185,5 @@ func (r *ByteValueReader) Value() []byte {
 
 // Err returns the first non-EOF error that was encountered by the reader.
 func (r *ByteValueReader) Err() error {
-	if r.err != nil {
-		return r.err
-	}
-	return r.scanner.Err()
+	return r.err
 }
