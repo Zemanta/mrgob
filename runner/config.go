@@ -50,6 +50,8 @@ type MapReduceConfig struct {
 	CustomProperties map[string]string
 	// Other files that will be downloaded next to the executable before running the job.
 	AdditionalFiles []string
+	// Environment options passed to the mapreduce jobs.
+	Env map[string]string
 }
 
 func (c *MapReduceConfig) getFileArg(fn string) []string {
@@ -62,6 +64,10 @@ func (c *MapReduceConfig) getArg(k, v string) []string {
 	return []string{
 		k, v,
 	}
+}
+
+func (c *MapReduceConfig) getEnvArg(k string, v interface{}) []string {
+	return []string{"-cmdenv", fmt.Sprintf("%s=%s", k, v)}
 }
 
 func (c *MapReduceConfig) getProperyArg(k string, v interface{}) []string {
@@ -91,7 +97,9 @@ func (c *MapReduceConfig) getConfigProperty() ([]string, error) {
 	str := string(b)
 	str = strconv.Quote(str)
 
-	args := []string{"-cmdenv", fmt.Sprintf("mrgob_config=\"%s\"", str)}
+	args := []string{
+		"-cmdenv", fmt.Sprintf("mrgob_config=\"%s\"", str),
+	}
 
 	return args, nil
 }
@@ -140,6 +148,10 @@ func (c *MapReduceConfig) getArgs() ([]string, error) {
 	}
 
 	args = append(args, c.getArg("-output", c.Output)...)
+
+	for k, v := range c.Env {
+		args = append(args, c.getEnvArg(k, v)...)
+	}
 
 	if c.JobConfig != nil {
 		a, err := c.getConfigProperty()

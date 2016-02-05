@@ -339,7 +339,7 @@ type MapReduceConfig struct {
 	// S3 or HDFS path to the executable job implementing "Init*Job" interface.
 	JobPath string
 
-	// Job configuration that will be made available in mapper and reducer jobs (not implemented yet).
+	// Job configuration that will be made available in mapper and reducer jobs.
 	JobConfig interface{}
 
 	// List of input files.
@@ -351,5 +351,7 @@ type MapReduceConfig struct {
 	CustomProperties map[string]string
 	// Other files that will be downloaded next to the executable before running the job.
 	AdditionalFiles []string
+	// Environment options passed to the mapreduce jobs.
+	Env map[string]string
 }
 ```
