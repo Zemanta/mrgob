@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/emr"
 	"golang.org/x/crypto/ssh"
 )
@@ -59,7 +60,7 @@ func (e *EmrProvider) getClusterState() (*clusterState, error) {
 		return e.clusterCache, nil
 	}
 
-	emrApi := emr.New(e.awsConfig)
+	emrApi := emr.New(session.New(e.awsConfig))
 
 	cc := &clusterState{
 		updated: time.Now(),
