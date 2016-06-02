@@ -101,13 +101,14 @@ func (hc *HadoopCommand) Run() HadoopStatus {
 
 	defer hc.done.Unlock()
 
-	for i := 0; i < hc.retries+1 && hc.status == HadoopStatusRunning; i++ {
+	for i := 0; i < hc.retries+1; i++ {
 		hr := &HadoopRun{}
 
 		hc.tries = append(hc.tries, hr)
 
 		if ok := hr.exec(hc.args); ok {
 			hc.status = HadoopStatusSuccess
+			break
 		}
 	}
 
@@ -198,8 +199,12 @@ func (hr *HadoopRun) runCommand(session *ssh.Session, command string) error {
 	debugLog("Running command: `%s`", command)
 
 	applicationPrefix := "Submitted application "
+	outWg := &sync.WaitGroup{}
+	outWg.Add(2)
 
 	go func() {
+		defer outWg.Done()
+
 		pipe, err := session.StderrPipe()
 		if err != nil {
 			return
@@ -225,6 +230,8 @@ func (hr *HadoopRun) runCommand(session *ssh.Session, command string) error {
 	}()
 
 	go func() {
+		defer outWg.Done()
+
 		pipe, err := session.StdoutPipe()
 		if err != nil {
 			return
@@ -239,7 +246,9 @@ func (hr *HadoopRun) runCommand(session *ssh.Session, command string) error {
 		}
 	}()
 
-	return session.Run(command)
+	res := session.Run(command)
+	outWg.Wait()
+	return res
 }
 
 func (hr *HadoopRun) ApplicationId() (string, error) {
