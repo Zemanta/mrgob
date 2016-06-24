@@ -86,6 +86,10 @@ func (e *EmrProvider) getClusterState() (*clusterState, error) {
 		}
 	}
 
+	if cc.summary == nil {
+		return nil, ErrClusterNotFound
+	}
+
 	instanceRes, err := emrApi.ListInstances(&emr.ListInstancesInput{
 		ClusterId: cc.summary.Id,
 		InstanceGroupTypes: []*string{
