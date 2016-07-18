@@ -44,6 +44,13 @@ var (
 	yarnLogsCommand   = "yarn logs -applicationId %s"
 
 	waitForLogs = time.Duration(2) * time.Second
+
+	retryBackoff = time.Duration(10) * time.Second
+)
+
+var (
+	maxMasterLoad = 10
+	loadCheck     = `test $(cat /proc/loadavg | cut -d"." -f 1) -lt %d && %s || (echo "Load over max load" && exit 10)`
 )
 
 func debugLog(s string, a ...interface{}) {
@@ -102,7 +109,9 @@ func (hc *HadoopCommand) Run() HadoopStatus {
 	defer hc.done.Unlock()
 
 	for i := 0; i < hc.retries+1; i++ {
-		hr := &HadoopRun{}
+		hr := &HadoopRun{
+			command: hc,
+		}
 
 		hc.tries = append(hc.tries, hr)
 
@@ -110,6 +119,8 @@ func (hc *HadoopCommand) Run() HadoopStatus {
 			hc.status = HadoopStatusSuccess
 			break
 		}
+
+		time.Sleep(retryBackoff)
 	}
 
 	if hc.status != HadoopStatusSuccess {
@@ -187,6 +198,8 @@ func (hc *HadoopCommand) FetchDebugData() (*HadoopDebugData, error) {
 
 type HadoopRun struct {
 	applicationId string
+
+	command *HadoopCommand
 
 	err    error
 	stdErr []string
@@ -382,7 +395,7 @@ func (hr *HadoopRun) FetchJobCounters() (HadoopJobCounters, error) {
 func (hr *HadoopRun) exec(arguments []string) bool {
 	defer func() { hr.done = time.Now() }()
 
-	client, err := hadoopProvider.GetNextSSHClient()
+	client, err := hadoopProvider.GetMasterSSHClient()
 	if err != nil {
 		hr.err = err
 		return false
@@ -397,9 +410,16 @@ func (hr *HadoopRun) exec(arguments []string) bool {
 	defer session.Close()
 
 	command := "\"" + strings.Join(arguments, `" "`) + "\""
-	err = hr.runCommand(session, command)
+	loadCheckCommand := fmt.Sprintf(loadCheck, maxMasterLoad, command)
+
+	err = hr.runCommand(session, loadCheckCommand)
 	if err != nil {
 		hr.err = err
+		return false
+	}
+
+	if hr.applicationId == "" {
+		hr.err = ErrMissingApplicationId
 		return false
 	}
 

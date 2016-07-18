@@ -130,46 +130,6 @@ func (e *EmrProvider) GetMasterHost() (master string, err error) {
 	return *cs.masterInstance.PublicDnsName, nil
 }
 
-func (e *EmrProvider) runon() (runon string, err error) {
-	cs, err := e.getClusterState()
-	if err != nil {
-		return "", err
-	}
-
-	rrMutex.Lock()
-	defer rrMutex.Unlock()
-
-	for i := 0; i < len(cs.coreInstances); i++ {
-		idx := roundRobin % len(cs.coreInstances)
-		roundRobin = idx + 1
-
-		inst := cs.coreInstances[idx]
-		if *inst.Status.State == "RUNNING" {
-			runon = *inst.PublicDnsName
-			break
-		}
-	}
-
-	if runon == "" {
-		return "", ErrInstanceNotFound
-	}
-
-	return runon, nil
-}
-
-func (e *EmrProvider) GetNextSSHClient() (*ssh.Client, error) {
-	host, err := e.runon()
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := ssh.Dial("tcp", fmt.Sprintf("%s:22", host), e.sshConfig)
-	if err != nil {
-		return nil, err
-	}
-	return client, err
-}
-
 func (e *EmrProvider) GetMasterSSHClient() (*ssh.Client, error) {
 	host, err := e.GetMasterHost()
 	if err != nil {

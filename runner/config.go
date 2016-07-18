@@ -7,19 +7,6 @@ import (
 	"strconv"
 )
 
-/*
-	"-D", "mapred.job.name=hamax-text",
-	"-D", "mapred.reduce.tasks=1",
-	"-D", "mapred.map.tasks=1",
-	"-D", "mapreduce.job.queuename=realtime",
-	//"-D", "mapreduce.job.ubertask.enable=true",
-	"-files", "s3://b1-eventlog-sync/tmp/"+bin,
-	"-input", "s3://b1-eventlog-sync/tmp/monkeys.txt",
-	"-output", "s3://b1-eventlog-sync/tmp/hamax-test1",
-	"-mapper", bin+" --stage=mapper",
-	"-reducer", bin+" --stage=reducer",
-*/
-
 var (
 	ErrMissingJobPath = fmt.Errorf("Missing job path")
 	ErrMissingInput   = fmt.Errorf("Missing input")
