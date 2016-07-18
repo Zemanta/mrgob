@@ -15,7 +15,7 @@ func ExecOnCluster(retries int, arguments ...string) error {
 		var session *ssh.Session
 		var client *ssh.Client
 
-		client, err = hadoopProvider.GetNextSSHClient()
+		client, err = hadoopProvider.GetMasterSSHClient()
 		if err != nil {
 			continue
 		}
