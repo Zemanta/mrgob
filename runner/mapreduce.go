@@ -34,6 +34,7 @@ var (
 	ErrStarted               = fmt.Errorf("Application can only be run once")
 	ErrMissingApplicationId  = fmt.Errorf("Missing application id")
 	ErrMissingHadoopProvider = fmt.Errorf("Missing Hadoop provider")
+	ErrLoadOverMax           = fmt.Errorf("Load over max load")
 )
 
 var (
@@ -50,7 +51,7 @@ var (
 
 var (
 	maxMasterLoad = 10
-	loadCheck     = `test $(cat /proc/loadavg | cut -d"." -f 1) -lt %d && %s || (echo "Load over max load" && exit 10)`
+	loadCheck     = fmt.Sprintf(`test $(cat /proc/loadavg | cut -d"." -f 1) -lt %d`, maxMasterLoad)
 )
 
 func debugLog(s string, a ...interface{}) {
@@ -392,6 +393,34 @@ func (hr *HadoopRun) FetchJobCounters() (HadoopJobCounters, error) {
 	return counters, nil
 }
 
+func (hr *HadoopRun) checkServerLoad(client *ssh.Client) error {
+	session, err := client.NewSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+
+	err = session.Run(loadCheck)
+	if err != nil {
+		return ErrLoadOverMax
+	}
+	return nil
+}
+
+func (hr *HadoopRun) checkAndWaitServerLoad(client *ssh.Client) error {
+	var err error
+	for i := 0; i < 6; i++ {
+		if i > 0 {
+			time.Sleep(10 * time.Second)
+		}
+		err = hr.checkServerLoad(client)
+		if err == nil {
+			break
+		}
+	}
+	return err
+}
+
 func (hr *HadoopRun) exec(arguments []string) bool {
 	defer func() { hr.done = time.Now() }()
 
@@ -402,6 +431,11 @@ func (hr *HadoopRun) exec(arguments []string) bool {
 	}
 	defer client.Close()
 
+	if err := hr.checkAndWaitServerLoad(client); err != nil {
+		hr.err = err
+		return false
+	}
+
 	session, err := client.NewSession()
 	if err != nil {
 		hr.err = err
@@ -410,9 +444,7 @@ func (hr *HadoopRun) exec(arguments []string) bool {
 	defer session.Close()
 
 	command := "\"" + strings.Join(arguments, `" "`) + "\""
-	loadCheckCommand := fmt.Sprintf(loadCheck, maxMasterLoad, command)
-
-	err = hr.runCommand(session, loadCheckCommand)
+	err = hr.runCommand(session, command)
 	if err != nil {
 		hr.err = err
 		return false
