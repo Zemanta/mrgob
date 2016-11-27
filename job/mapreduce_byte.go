@@ -35,15 +35,17 @@ func NewByteKVWriter(w io.Writer) *ByteKVWriter {
 }
 
 // Write encodes both key and value
-func (w *ByteKVWriter) Write(k []byte, v []byte) error {
+func (w *ByteKVWriter) Write(k []byte, vs ...[]byte) error {
 	if _, err := w.enck.Write(k); err != nil {
 		return err
 	}
 	if _, err := w.w.Write(tab); err != nil {
 		return err
 	}
-	if _, err := w.encv.Write(v); err != nil {
-		return err
+	for _, v := range vs {
+		if _, err := w.encv.Write(v); err != nil {
+			return err
+		}
 	}
 	if _, err := w.w.Write(nl); err != nil {
 		return err
