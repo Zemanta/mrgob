@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"strings"
 	"sync"
@@ -409,9 +410,9 @@ func (hr *HadoopRun) checkServerLoad(client *ssh.Client) error {
 
 func (hr *HadoopRun) checkAndWaitServerLoad(client *ssh.Client) error {
 	var err error
-	for i := 0; i < 6; i++ {
+	for i := 0; i < 10; i++ {
 		if i > 0 {
-			time.Sleep(10 * time.Second)
+			time.Sleep(time.Duration(10.0+30.0*rand.Float64()) * time.Second)
 		}
 		err = hr.checkServerLoad(client)
 		if err == nil {
@@ -463,24 +464,15 @@ func (hr *HadoopRun) CmdOutput() (stdOut string, stdErr string, cmdErr error) {
 }
 
 func (hr *HadoopRun) FetchDebugData() (*HadoopDebugData, error) {
-	d := &HadoopDebugData{}
-	var err error
+	d := &HadoopDebugData{
+		Logs: &HadoopApplicationLogs{},
+	}
 
 	d.StdOut, d.StdErr, d.CmdErr = hr.CmdOutput()
 
-	d.Logs, err = hr.FetchApplicationLogs()
+	d.Logs, _ = hr.FetchApplicationLogs()
+	d.Counters, _ = hr.FetchJobCounters()
+	d.Status, _ = hr.FetchApplicationStatus()
 
-	var cerr error
-	d.Counters, cerr = hr.FetchJobCounters()
-	if cerr != nil {
-		err = cerr
-	}
-
-	var serr error
-	d.Status, cerr = hr.FetchApplicationStatus()
-	if serr != nil {
-		err = serr
-	}
-
-	return d, err
+	return d, nil
 }
