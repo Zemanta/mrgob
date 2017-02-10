@@ -18,6 +18,7 @@ func (s *testSorter) sort() {
 	sort.Strings(lines)
 	s.Reset()
 	s.WriteString(strings.Join(lines, "\n"))
+	s.WriteString("\n")
 }
 
 // TestRawJob simulates a raw mapreduce job by reading the data from the input reader and writing results to the output writer
