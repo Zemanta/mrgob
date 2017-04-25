@@ -45,7 +45,8 @@ var (
 	counterApiUrl     = "http://%s:%d/ws/v1/history/mapreduce/jobs/%s/counters"
 	yarnLogsCommand   = "yarn logs -applicationId %s"
 
-	waitForLogs = time.Duration(2) * time.Second
+	waitForLogs   = time.Duration(2) * time.Second
+	waitForStatus = time.Duration(5) * time.Second
 
 	retryBackoff = time.Duration(10) * time.Second
 )
@@ -213,6 +214,16 @@ type HadoopRun struct {
 func (hr *HadoopRun) runCommand(session *ssh.Session, command string) error {
 	debugLog("Running command: `%s`", command)
 
+	// Request pseudo terminal because session.Close doesn't work otherwise
+	modes := ssh.TerminalModes{
+		ssh.ECHO:          0,     // disable echoing
+		ssh.TTY_OP_ISPEED: 14400, // input speed = 14.4kbaud
+		ssh.TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
+	}
+	if err := session.RequestPty("xterm", 40, 80, modes); err != nil {
+		return err
+	}
+
 	applicationPrefix := "Submitted application "
 	outWg := &sync.WaitGroup{}
 	outWg.Add(2)
@@ -220,7 +231,7 @@ func (hr *HadoopRun) runCommand(session *ssh.Session, command string) error {
 	go func() {
 		defer outWg.Done()
 
-		pipe, err := session.StderrPipe()
+		pipe, err := session.StdoutPipe()
 		if err != nil {
 			return
 		}
@@ -238,6 +249,9 @@ func (hr *HadoopRun) runCommand(session *ssh.Session, command string) error {
 				}
 
 				hr.applicationId = strings.TrimSpace(ss)
+				if err := session.Close(); err != nil {
+					debugLog("Error closing ssh session: %s", err)
+				}
 			}
 
 			hr.stdErr = append(hr.stdErr, line)
@@ -247,7 +261,7 @@ func (hr *HadoopRun) runCommand(session *ssh.Session, command string) error {
 	go func() {
 		defer outWg.Done()
 
-		pipe, err := session.StdoutPipe()
+		pipe, err := session.StderrPipe()
 		if err != nil {
 			return
 		}
@@ -261,9 +275,34 @@ func (hr *HadoopRun) runCommand(session *ssh.Session, command string) error {
 		}
 	}()
 
-	res := session.Run(command)
+	session.Run(command)
 	outWg.Wait()
-	return res
+
+	return hr.waitForApplicationComplete()
+}
+
+func (hr *HadoopRun) waitForApplicationComplete() error {
+	retryCount := 0
+	for range time.Tick(waitForStatus) {
+		status, err := hr.FetchApplicationStatus()
+		if err != nil {
+			retryCount++
+			if retryCount > 2 {
+				return err
+			}
+		}
+		retryCount = 0
+
+		if status.App.FinalStatus == "UNDEFINED" {
+			continue
+		}
+		if status.App.FinalStatus == "SUCCEEDED" {
+			return nil
+		}
+		return fmt.Errorf("Application run error: %s", status.App.FinalStatus)
+	}
+
+	return nil
 }
 
 func (hr *HadoopRun) ApplicationId() (string, error) {
