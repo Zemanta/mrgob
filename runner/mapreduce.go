@@ -2,8 +2,10 @@ package runner
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -39,9 +41,16 @@ var (
 )
 
 var (
+	runningJobs   = map[*HadoopCommand]struct{}{}
+	runningJobsMu = &sync.Mutex{}
+)
+
+var (
 	hadoopApiPort     = 8088
 	historyServerPort = 19888
 	statusApiUrl      = "http://%s:%d/ws/v1/cluster/apps/%s"
+	killApiUrl        = "http://%s:%d/ws/v1/cluster/apps/%s/state"
+	killStateBody     = []byte("{\"state\":\"KILLED\"}")
 	counterApiUrl     = "http://%s:%d/ws/v1/history/mapreduce/jobs/%s/counters"
 	yarnLogsCommand   = "yarn logs -applicationId %s"
 
@@ -58,6 +67,20 @@ var (
 
 func debugLog(s string, a ...interface{}) {
 	log.Printf(s, a...)
+}
+
+func KillAll() error {
+	debugLog("Killing all running applications")
+	runningJobsMu.Lock()
+	defer runningJobsMu.Unlock()
+
+	for hc := range runningJobs {
+		if err := hc.Kill(); err != nil {
+			debugLog("Error killing application: %s", err)
+		}
+	}
+
+	return nil
 }
 
 type HadoopCommand struct {
@@ -110,6 +133,15 @@ func (hc *HadoopCommand) Run() HadoopStatus {
 	hc.startedMu.Unlock()
 
 	defer hc.done.Unlock()
+
+	runningJobsMu.Lock()
+	runningJobs[hc] = struct{}{}
+	runningJobsMu.Unlock()
+	defer func() {
+		runningJobsMu.Lock()
+		delete(runningJobs, hc)
+		runningJobsMu.Unlock()
+	}()
 
 	for i := 0; i < hc.retries+1; i++ {
 		hr := &HadoopRun{
@@ -173,6 +205,14 @@ func (hc *HadoopCommand) ApplicationId() (string, error) {
 	}
 
 	return hc.tries[len(hc.tries)-1].ApplicationId()
+}
+
+func (hc *HadoopCommand) Kill() error {
+	if len(hc.tries) == 0 {
+		return ErrNotRunning
+	}
+
+	return hc.tries[len(hc.tries)-1].Kill()
 }
 
 func (hc *HadoopCommand) Tries() []*HadoopRun {
@@ -282,6 +322,10 @@ func (hr *HadoopRun) runCommand(session *ssh.Session, command string) error {
 }
 
 func (hr *HadoopRun) waitForApplicationComplete() error {
+	if hr.applicationId == "" {
+		return ErrMissingApplicationId
+	}
+
 	retryCount := 0
 	for range time.Tick(waitForStatus) {
 		status, err := hr.FetchApplicationStatus()
@@ -300,6 +344,36 @@ func (hr *HadoopRun) waitForApplicationComplete() error {
 			return nil
 		}
 		return fmt.Errorf("Application run error: %s", status.App.FinalStatus)
+	}
+
+	return nil
+}
+
+func (hr *HadoopRun) Kill() error {
+	if hr.applicationId == "" {
+		return ErrMissingApplicationId
+	}
+	debugLog("Killing application: %s", hr.applicationId)
+
+	hadoopMaster, err := hadoopProvider.GetMasterHost()
+	if err != nil {
+		return err
+	}
+
+	client := &http.Client{}
+	req, err := http.NewRequest("PUT", fmt.Sprintf(killApiUrl, hadoopMaster, hadoopApiPort, hr.applicationId), bytes.NewReader(killStateBody))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("Kill application error %s", resp.Status)
 	}
 
 	return nil

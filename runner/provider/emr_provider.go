@@ -2,7 +2,6 @@ package provider
 
 import (
 	"fmt"
-	"math/rand"
 	"sync"
 	"time"
 
@@ -15,11 +14,6 @@ import (
 var (
 	ErrClusterNotFound  = fmt.Errorf("EMR cluster not found")
 	ErrInstanceNotFound = fmt.Errorf("EMR instance not found")
-)
-
-var (
-	roundRobin = rand.Intn(1000)
-	rrMutex    = sync.Mutex{}
 )
 
 type clusterState struct {
