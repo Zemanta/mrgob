@@ -371,7 +371,7 @@ func (hr *HadoopRun) Kill() error {
 		return err
 	}
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode >= 400 {
 		return fmt.Errorf("Kill application error %s", resp.Status)
 	}
 
