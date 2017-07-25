@@ -330,9 +330,10 @@ func (hr *HadoopRun) waitForApplicationComplete() error {
 		status, err := hr.FetchApplicationStatus()
 		if err != nil {
 			retryCount++
-			if retryCount > 2 {
+			if retryCount > 10 {
 				return err
 			}
+			continue
 		}
 		retryCount = 0
 
