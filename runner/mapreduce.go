@@ -60,7 +60,7 @@ var (
 )
 
 var (
-	maxMasterLoad = 10
+	maxMasterLoad = 16
 	loadCheck     = fmt.Sprintf(`test $(cat /proc/loadavg | cut -d"." -f 1) -lt %d`, maxMasterLoad)
 )
 
