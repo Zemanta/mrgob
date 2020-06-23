@@ -121,7 +121,7 @@ func (e *EmrProvider) GetMasterHost() (master string, err error) {
 		return "", err
 	}
 
-	return *cs.masterInstance.PublicDnsName, nil
+	return *cs.masterInstance.PrivateIpAddress, nil
 }
 
 func (e *EmrProvider) GetMasterSSHClient() (*ssh.Client, error) {
